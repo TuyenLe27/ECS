@@ -85,7 +85,7 @@ npm run dev
 
 ---
 
-### 🐳 Cách Chạy 2: Chạy Bằng Docker (Một câu lệnh duy nhất)
+### 🐳 Cách Chạy 2: Chạy Bằng Docker (Một câu lệnh duy nhất - Khuyên dùng)
 
 Nếu máy tính của bạn đã cài đặt **Docker** và **Docker Desktop**, bạn có thể khởi chạy toàn bộ hệ thống (gồm cả MySQL Database, Backend API, và Frontend Nginx) chỉ với một câu lệnh:
 
@@ -99,6 +99,41 @@ Sau khi Docker khởi chạy xong:
 - **Backend API**: Truy cập tại **`http://localhost:5000`**
 - **MySQL Container (ecs_mysql)**: Lắng nghe tại port `3307` của host machine (để tránh xung đột với MySQL 3306 đang chạy trên máy của bạn nếu có). Database bên trong container tự động được import schema và seed data từ trước.
 
+*Lưu ý: Khi tắt máy (Shutdown), các container sẽ tự động dừng. Lần tới khi bật máy, bạn chỉ cần mở ứng dụng **Docker Desktop** lên và nhấn nút **Start/Play** ở nhóm container `ecs` để chạy lại mà không cần gõ lệnh.*
+
+---
+
+### 🌐 Cách Chạy 3: Chạy trực tiếp từ Docker Hub (Không cần tải mã nguồn)
+
+Nếu bạn chỉ muốn chạy thử ứng dụng trên máy mới mà không cần cài Git hay tải mã nguồn (chỉ cần chạy ứng dụng):
+1. Tải duy nhất file `docker-compose-hub.yml` và thư mục `database/` chứa dữ liệu mẫu về máy mới.
+2. Chạy lệnh:
+   ```bash
+   docker compose -f docker-compose-hub.yml up
+   ```
+   *Hệ thống tự động kéo các bản đóng gói (Images) đã được lưu trên Docker Hub của bạn (`tuyenlv372/ecs-backend` và `tuyenlv372/ecs-frontend`) về chạy lập tức.*
+
+---
+
+## 🔄 Quy Trình Code Trên Nhiều Máy Tính (Đồng bộ bằng Git)
+
+Khi bạn muốn code dự án này trên 2 máy tính khác nhau (ví dụ: máy A ở nhà và máy B ở trường), hãy làm theo quy trình chuẩn sau:
+
+### 1. Khi kết thúc phiên code ở máy B:
+Sau khi sửa đổi mã nguồn hoặc thêm tính năng mới ở máy B, bạn gõ các lệnh sau ở terminal để lưu và đẩy code mới lên GitHub:
+```bash
+git add .
+git commit -m "Nội dung/tính năng bạn vừa sửa đổi"
+git push origin main
+```
+
+### 2. Khi quay lại máy A (hoặc máy khác):
+Trước khi bắt đầu code tiếp trên máy A, bạn mở thư mục dự án và chạy lệnh sau để cập nhật code mới nhất từ GitHub về máy:
+```bash
+git pull origin main
+```
+*Lúc này máy A sẽ tự động tải các phần sửa đổi ở máy B về và bạn có thể chạy hoặc code tiếp bình thường!*
+
 ---
 
 ## 📊 Biểu Phí Dịch Vụ Mẫu
@@ -106,3 +141,4 @@ Sau khi Docker khởi chạy xong:
 - **Out-bound**: $6,000 / ngày / nhân viên
 - **Tele Marketing**: $5,500 / ngày / nhân viên
 *(Biểu phí và doanh thu được tự động tính toán chính xác theo đơn vị Đô la Mỹ $)*
+
