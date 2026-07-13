@@ -110,7 +110,8 @@ INSERT INTO call_logs (client_id, employee_id, call_type, call_datetime, duratio
 -- ============================================================
 -- 9. USERS (password là "Admin@123" đã hash bằng bcrypt)
 -- ============================================================
-INSERT INTO users (username, password_hash, email, full_name, role) VALUES
-('admin', '$2b$10$rOzJqjJ5NcGpTQGq8sPaUeKpWC0xvXrFhHqNzOJR.QT5E5k8zJxNu', 'admin@ecs.com', 'System Administrator', 'admin'),
-('manager', '$2b$10$rOzJqjJ5NcGpTQGq8sPaUeKpWC0xvXrFhHqNzOJR.QT5E5k8zJxNu', 'manager@ecs.com', 'Service Manager', 'manager'),
-('staff1', '$2b$10$rOzJqjJ5NcGpTQGq8sPaUeKpWC0xvXrFhHqNzOJR.QT5E5k8zJxNu', 'staff@ecs.com', 'Staff Member', 'staff');
+INSERT INTO users (username, password_hash, email, full_name, role, employee_id) VALUES
+('admin', '$2a$12$TyOiioV.m72moJ.LjTnHE.eSjGJ6/jt.6PTWZqndE71n8N5u7IPtS', 'admin@ecs.com', 'System Administrator', 'admin', NULL),
+('manager', '$2a$10$aStf/XETVzhukAQiTrVbcetHV1TRTFOJXn3PPynA9tD2U57S5PhIK', 'manager@ecs.com', 'Service Manager', 'manager', NULL),
+('staff1', '$2a$10$aStf/XETVzhukAQiTrVbcetHV1TRTFOJXn3PPynA9tD2U57S5PhIK', 'staff@ecs.com', 'Staff Member', 'staff', 1);
+

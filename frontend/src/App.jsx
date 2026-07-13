@@ -29,21 +29,35 @@ function ProtectedLayout({ children }) {
   );
 }
 
+function RoleProtectedRoute({ children, allowedRoles }) {
+  const { user } = useAuth();
+  if (!user) return <Navigate to="/login" replace />;
+  if (!allowedRoles.includes(user.role)) {
+    return (
+      <div style={{ padding: '40px', textAlign: 'center', color: '#ef4444', background: '#1e293b', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', marginTop: '40px' }}>
+        <h3 style={{ fontSize: '20px', marginBottom: '10px', fontWeight: 600 }}>Access Denied</h3>
+        <p style={{ color: '#94a3b8' }}>Bạn không có quyền truy cập trang này.</p>
+      </div>
+    );
+  }
+  return children;
+}
+
 function AppRoutes() {
   const { user } = useAuth();
   return (
     <Routes>
       <Route path="/login" element={user ? <Navigate to="/" /> : <LoginPage />} />
       <Route path="/" element={<ProtectedLayout><DashboardPage /></ProtectedLayout>} />
-      <Route path="/services" element={<ProtectedLayout><ServicesPage /></ProtectedLayout>} />
-      <Route path="/departments" element={<ProtectedLayout><DepartmentsPage /></ProtectedLayout>} />
-      <Route path="/employees" element={<ProtectedLayout><EmployeesPage /></ProtectedLayout>} />
-      <Route path="/clients" element={<ProtectedLayout><ClientsPage /></ProtectedLayout>} />
-      <Route path="/client-services" element={<ProtectedLayout><ClientServicesPage /></ProtectedLayout>} />
-      <Route path="/client-products" element={<ProtectedLayout><ClientProductsPage /></ProtectedLayout>} />
-      <Route path="/payments" element={<ProtectedLayout><PaymentsPage /></ProtectedLayout>} />
-      <Route path="/call-logs" element={<ProtectedLayout><CallLogsPage /></ProtectedLayout>} />
-      <Route path="/reports" element={<ProtectedLayout><ReportsPage /></ProtectedLayout>} />
+      <Route path="/services" element={<ProtectedLayout><RoleProtectedRoute allowedRoles={['admin', 'manager']}><ServicesPage /></RoleProtectedRoute></ProtectedLayout>} />
+      <Route path="/departments" element={<ProtectedLayout><RoleProtectedRoute allowedRoles={['admin', 'manager']}><DepartmentsPage /></RoleProtectedRoute></ProtectedLayout>} />
+      <Route path="/employees" element={<ProtectedLayout><RoleProtectedRoute allowedRoles={['admin', 'manager']}><EmployeesPage /></RoleProtectedRoute></ProtectedLayout>} />
+      <Route path="/clients" element={<ProtectedLayout><RoleProtectedRoute allowedRoles={['admin', 'manager', 'staff']}><ClientsPage /></RoleProtectedRoute></ProtectedLayout>} />
+      <Route path="/client-services" element={<ProtectedLayout><RoleProtectedRoute allowedRoles={['admin', 'manager', 'staff']}><ClientServicesPage /></RoleProtectedRoute></ProtectedLayout>} />
+      <Route path="/client-products" element={<ProtectedLayout><RoleProtectedRoute allowedRoles={['admin', 'manager', 'staff']}><ClientProductsPage /></RoleProtectedRoute></ProtectedLayout>} />
+      <Route path="/payments" element={<ProtectedLayout><RoleProtectedRoute allowedRoles={['admin', 'manager']}><PaymentsPage /></RoleProtectedRoute></ProtectedLayout>} />
+      <Route path="/call-logs" element={<ProtectedLayout><RoleProtectedRoute allowedRoles={['admin', 'manager', 'staff']}><CallLogsPage /></RoleProtectedRoute></ProtectedLayout>} />
+      <Route path="/reports" element={<ProtectedLayout><RoleProtectedRoute allowedRoles={['admin', 'manager']}><ReportsPage /></RoleProtectedRoute></ProtectedLayout>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

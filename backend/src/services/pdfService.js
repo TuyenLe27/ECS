@@ -3,6 +3,9 @@ const fs = require('fs');
 
 // Tìm browser có sẵn trên Windows (Edge hoặc Chrome)
 const findBrowser = () => {
+  if (process.env.PUPPETEER_EXECUTABLE_PATH) {
+    return process.env.PUPPETEER_EXECUTABLE_PATH;
+  }
   const paths = [
     'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
     'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe',

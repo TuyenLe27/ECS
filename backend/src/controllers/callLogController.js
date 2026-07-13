@@ -1,5 +1,5 @@
 const { Op } = require('sequelize');
-const { CallLog, Client, Employee } = require('../models');
+const { CallLog, Client, Employee, User } = require('../models');
 
 // GET /api/call-logs?client_id=&employee_id=&call_type=&from=&to=
 const getAll = async (req, res) => {
@@ -10,6 +10,16 @@ const getAll = async (req, res) => {
     if (employee_id) where.employee_id = employee_id;
     if (call_type) where.call_type = call_type;
     if (from && to) where.call_datetime = { [Op.between]: [from, to] };
+
+    if (req.user.role === 'staff') {
+      const userRecord = await User.findByPk(req.user.id);
+      if (userRecord && userRecord.employee_id) {
+        where.employee_id = userRecord.employee_id;
+      } else {
+        return res.json([]);
+      }
+    }
+
     const logs = await CallLog.findAll({
       where,
       include: [
@@ -27,6 +37,14 @@ const getAll = async (req, res) => {
 // POST /api/call-logs
 const create = async (req, res) => {
   try {
+    if (req.user.role === 'staff') {
+      const userRecord = await User.findByPk(req.user.id);
+      if (userRecord && userRecord.employee_id) {
+        req.body.employee_id = userRecord.employee_id;
+      } else {
+        return res.status(403).json({ message: 'Tài khoản không được liên kết với nhân viên nào' });
+      }
+    }
     const log = await CallLog.create(req.body);
     res.status(201).json({ message: 'Tạo call log thành công', log });
   } catch (err) {
@@ -39,6 +57,14 @@ const update = async (req, res) => {
   try {
     const log = await CallLog.findByPk(req.params.id);
     if (!log) return res.status(404).json({ message: 'Không tìm thấy call log' });
+
+    if (req.user.role === 'staff') {
+      const userRecord = await User.findByPk(req.user.id);
+      if (!userRecord || log.employee_id !== userRecord.employee_id) {
+        return res.status(403).json({ message: 'Bạn không có quyền chỉnh sửa cuộc gọi này' });
+      }
+    }
+
     await log.update(req.body);
     res.json({ message: 'Cập nhật thành công', log });
   } catch (err) {
@@ -51,6 +77,14 @@ const remove = async (req, res) => {
   try {
     const log = await CallLog.findByPk(req.params.id);
     if (!log) return res.status(404).json({ message: 'Không tìm thấy call log' });
+
+    if (req.user.role === 'staff') {
+      const userRecord = await User.findByPk(req.user.id);
+      if (!userRecord || log.employee_id !== userRecord.employee_id) {
+        return res.status(403).json({ message: 'Bạn không có quyền xóa cuộc gọi này' });
+      }
+    }
+
     await log.destroy();
     res.json({ message: 'Xóa thành công' });
   } catch (err) {

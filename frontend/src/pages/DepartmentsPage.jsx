@@ -4,10 +4,14 @@ import Modal from '../components/Modal';
 import { Badge, Loading, ConfirmModal } from '../components/UI';
 import { Plus, Edit2, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useAuth } from '../context/AuthContext';
 
 const EMPTY = { name: '', code: '', description: '', manager_name: '', is_active: 1 };
 
 export default function DepartmentsPage() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
+
   const [depts, setDepts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState({ open: false, mode: '', data: null });
@@ -47,13 +51,15 @@ export default function DepartmentsPage() {
     <div>
       <div className="page-header">
         <div><h2>🏛️ Phòng Ban</h2><p>Quản lý các phòng ban của ECS</p></div>
-        <button id="add-dept-btn" className="btn btn-primary" onClick={openAdd}><Plus size={16} />Thêm Phòng Ban</button>
+        {isAdmin && (
+          <button id="add-dept-btn" className="btn btn-primary" onClick={openAdd}><Plus size={16} />Thêm Phòng Ban</button>
+        )}
       </div>
       <div className="table-container">
         <div className="table-header"><h3>Danh Sách Phòng Ban ({depts.length})</h3></div>
         {loading ? <Loading /> : (
           <table>
-            <thead><tr><th>Mã</th><th>Tên Phòng Ban</th><th>Trưởng Phòng</th><th>Mô Tả</th><th>Trạng Thái</th><th>Hành Động</th></tr></thead>
+            <thead><tr><th>Mã</th><th>Tên Phòng Ban</th><th>Trưởng Phòng</th><th>Mô Tả</th><th>Trạng Thái</th>{isAdmin && <th>Hành Động</th>}</tr></thead>
             <tbody>
               {depts.map(d => (
                 <tr key={d.id}>
@@ -62,12 +68,14 @@ export default function DepartmentsPage() {
                   <td>{d.manager_name || '-'}</td>
                   <td style={{ maxWidth: '350px', fontSize: '12px' }}>{d.description || '-'}</td>
                   <td><Badge status={d.is_active ? 'active' : 'inactive'} /></td>
-                  <td>
-                    <div className="action-btns">
-                      <button id={`edit-dept-${d.id}`} className="btn btn-sm btn-secondary" onClick={() => openEdit(d)}><Edit2 size={13} /></button>
-                      <button id={`delete-dept-${d.id}`} className="btn btn-sm btn-danger" onClick={() => setConfirmId(d.id)}><Trash2 size={13} /></button>
-                    </div>
-                  </td>
+                  {isAdmin && (
+                    <td>
+                      <div className="action-btns">
+                        <button id={`edit-dept-${d.id}`} className="btn btn-sm btn-secondary" onClick={() => openEdit(d)}><Edit2 size={13} /></button>
+                        <button id={`delete-dept-${d.id}`} className="btn btn-sm btn-danger" onClick={() => setConfirmId(d.id)}><Trash2 size={13} /></button>
+                      </div>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

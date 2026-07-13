@@ -4,10 +4,14 @@ import Modal from '../components/Modal';
 import { Badge, Loading, ConfirmModal } from '../components/UI';
 import { Plus, Edit2, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useAuth } from '../context/AuthContext';
 
 const EMPTY = { client_id: '', product_name: '', category: '', description: '', price: '', is_active: 1 };
 
 export default function ClientProductsPage() {
+  const { user } = useAuth();
+  const isStaff = user?.role === 'staff';
+
   const [products, setProducts] = useState([]);
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -53,7 +57,9 @@ export default function ClientProductsPage() {
     <div>
       <div className="page-header">
         <div><h2>📦 Sản Phẩm Khách Hàng</h2><p>Sản phẩm/dịch vụ mà khách hàng cung cấp</p></div>
-        <button id="add-product-btn" className="btn btn-primary" onClick={openAdd}><Plus size={16} />Thêm Sản Phẩm</button>
+        {!isStaff && (
+          <button id="add-product-btn" className="btn btn-primary" onClick={openAdd}><Plus size={16} />Thêm Sản Phẩm</button>
+        )}
       </div>
       <div className="filters-bar">
         <select id="product-client-filter" className="filter-select" value={clientFilter} onChange={e => setClientFilter(e.target.value)}>
@@ -65,10 +71,10 @@ export default function ClientProductsPage() {
         <div className="table-header"><h3>Danh Sách Sản Phẩm ({products.length})</h3></div>
         {loading ? <Loading /> : (
           <table>
-            <thead><tr><th>Khách Hàng</th><th>Tên Sản Phẩm</th><th>Danh Mục</th><th>Giá</th><th>Mô Tả</th><th>Trạng Thái</th><th>Hành Động</th></tr></thead>
+            <thead><tr><th>Khách Hàng</th><th>Tên Sản Phẩm</th><th>Danh Mục</th><th>Giá</th><th>Mô Tả</th><th>Trạng Thái</th>{!isStaff && <th>Hành Động</th>}</tr></thead>
             <tbody>
               {products.length === 0 ? (
-                <tr><td colSpan="7" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>Không có dữ liệu</td></tr>
+                <tr><td colSpan={isStaff ? 6 : 7} style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>Không có dữ liệu</td></tr>
               ) : products.map(p => (
                 <tr key={p.id}>
                   <td>{p.client?.company_name || '-'}</td>
@@ -77,12 +83,14 @@ export default function ClientProductsPage() {
                   <td>{p.price ? `$${Number(p.price).toLocaleString()}` : '-'}</td>
                   <td style={{ maxWidth: '250px', fontSize: '12px' }}>{p.description || '-'}</td>
                   <td><Badge status={p.is_active ? 'active' : 'inactive'} /></td>
-                  <td>
-                    <div className="action-btns">
-                      <button id={`edit-product-${p.id}`} className="btn btn-sm btn-secondary" onClick={() => openEdit(p)}><Edit2 size={13} /></button>
-                      <button id={`delete-product-${p.id}`} className="btn btn-sm btn-danger" onClick={() => setConfirmId(p.id)}><Trash2 size={13} /></button>
-                    </div>
-                  </td>
+                  {!isStaff && (
+                    <td>
+                      <div className="action-btns">
+                        <button id={`edit-product-${p.id}`} className="btn btn-sm btn-secondary" onClick={() => openEdit(p)}><Edit2 size={13} /></button>
+                        <button id={`delete-product-${p.id}`} className="btn btn-sm btn-danger" onClick={() => setConfirmId(p.id)}><Trash2 size={13} /></button>
+                      </div>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

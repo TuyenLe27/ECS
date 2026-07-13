@@ -1,4 +1,4 @@
-const { ClientService, Client, Service } = require('../models');
+const { ClientService, Client, Service, User, Employee } = require('../models');
 const moment = require('moment');
 
 // Tính tổng phí: charge_per_day × num_employees × total_days
@@ -17,6 +17,20 @@ const getAll = async (req, res) => {
     if (client_id) where.client_id = client_id;
     if (service_id) where.service_id = service_id;
     if (status) where.status = status;
+
+    if (req.user.role === 'staff') {
+      const userRecord = await User.findByPk(req.user.id);
+      if (userRecord && userRecord.employee_id) {
+        const emp = await Employee.findByPk(userRecord.employee_id);
+        if (emp && emp.service_id) {
+          where.service_id = emp.service_id;
+        } else {
+          return res.json([]);
+        }
+      } else {
+        return res.json([]);
+      }
+    }
     const list = await ClientService.findAll({
       where,
       include: [

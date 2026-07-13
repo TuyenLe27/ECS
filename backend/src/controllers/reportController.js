@@ -14,7 +14,7 @@ const getDashboard = async (req, res) => {
       Payment.count({ where: { status: 'overdue' } })
     ]);
 
-    // Doanh thu theo tháng (6 tháng gần nhất)
+    // Doanh thu theo tháng (6 tháng gần nhất có dữ liệu)
     const revenueByMonth = await Payment.findAll({
       attributes: [
         [sequelize.fn('DATE_FORMAT', sequelize.col('due_date'), '%Y-%m'), 'month'],
@@ -22,12 +22,15 @@ const getDashboard = async (req, res) => {
         [sequelize.fn('COUNT', sequelize.col('id')), 'count']
       ],
       where: {
-        status: 'paid',
-        paid_date: { [Op.gte]: sequelize.literal("DATE_SUB(NOW(), INTERVAL 6 MONTH)") }
+        status: 'paid'
       },
       group: [sequelize.fn('DATE_FORMAT', sequelize.col('due_date'), '%Y-%m')],
-      order: [[sequelize.fn('DATE_FORMAT', sequelize.col('due_date'), '%Y-%m'), 'ASC']]
+      order: [[sequelize.fn('DATE_FORMAT', sequelize.col('due_date'), '%Y-%m'), 'DESC']],
+      limit: 6
     });
+
+    // Sắp xếp lại theo thứ tự thời gian tăng dần
+    revenueByMonth.reverse();
 
     // Phân bổ client theo service
     const clientsByService = await ClientService.findAll({

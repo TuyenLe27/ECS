@@ -4,10 +4,14 @@ import Modal from '../components/Modal';
 import { Badge, Loading, ConfirmModal } from '../components/UI';
 import { Search, Plus, Edit2, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useAuth } from '../context/AuthContext';
 
 const EMPTY = { emp_code: '', first_name: '', last_name: '', email: '', phone: '', designation: '', dept_id: '', service_id: '', salary: '', join_date: '', status: 'active' };
 
 export default function EmployeesPage() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
+
   const [employees, setEmployees] = useState([]);
   const [depts, setDepts] = useState([]);
   const [services, setServices] = useState([]);
@@ -60,7 +64,9 @@ export default function EmployeesPage() {
     <div>
       <div className="page-header">
         <div><h2>👥 Nhân Viên</h2><p>Quản lý nhân viên theo phòng ban và dịch vụ</p></div>
-        <button id="add-employee-btn" className="btn btn-primary" onClick={openAdd}><Plus size={16} />Thêm Nhân Viên</button>
+        {isAdmin && (
+          <button id="add-employee-btn" className="btn btn-primary" onClick={openAdd}><Plus size={16} />Thêm Nhân Viên</button>
+        )}
       </div>
       <div className="filters-bar">
         <div className="search-input-wrap">
@@ -83,10 +89,10 @@ export default function EmployeesPage() {
         <div className="table-header"><h3>Danh Sách Nhân Viên ({employees.length})</h3></div>
         {loading ? <Loading /> : (
           <table>
-            <thead><tr><th>Mã NV</th><th>Họ Tên</th><th>Email</th><th>Chức Danh</th><th>Phòng Ban</th><th>Dịch Vụ</th><th>Lương ($)</th><th>Trạng Thái</th><th>Hành Động</th></tr></thead>
+            <thead><tr><th>Mã NV</th><th>Họ Tên</th><th>Email</th><th>Chức Danh</th><th>Phòng Ban</th><th>Dịch Vụ</th><th>Lương ($)</th><th>Trạng Thái</th>{isAdmin && <th>Hành Động</th>}</tr></thead>
             <tbody>
               {employees.length === 0 ? (
-                <tr><td colSpan="9" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>Không có dữ liệu</td></tr>
+                <tr><td colSpan={isAdmin ? 9 : 8} style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>Không có dữ liệu</td></tr>
               ) : employees.map(e => (
                 <tr key={e.id}>
                   <td><strong>{e.emp_code}</strong></td>
@@ -97,12 +103,14 @@ export default function EmployeesPage() {
                   <td>{e.service ? <Badge type={e.service.type} /> : <span className="text-muted">-</span>}</td>
                   <td><strong style={{ color: 'var(--success)' }}>{e.salary ? `$${Number(e.salary).toLocaleString()}` : '-'}</strong></td>
                   <td><Badge status={e.status} /></td>
-                  <td>
-                    <div className="action-btns">
-                      <button id={`edit-emp-${e.id}`} className="btn btn-sm btn-secondary" onClick={() => openEdit(e)}><Edit2 size={13} /></button>
-                      <button id={`delete-emp-${e.id}`} className="btn btn-sm btn-danger" onClick={() => setConfirmId(e.id)}><Trash2 size={13} /></button>
-                    </div>
-                  </td>
+                  {isAdmin && (
+                    <td>
+                      <div className="action-btns">
+                        <button id={`edit-emp-${e.id}`} className="btn btn-sm btn-secondary" onClick={() => openEdit(e)}><Edit2 size={13} /></button>
+                        <button id={`delete-emp-${e.id}`} className="btn btn-sm btn-danger" onClick={() => setConfirmId(e.id)}><Trash2 size={13} /></button>
+                      </div>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

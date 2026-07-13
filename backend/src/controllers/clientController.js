@@ -1,5 +1,5 @@
 const { Op } = require('sequelize');
-const { Client, ClientService, ClientProduct, Payment, Service } = require('../models');
+const { Client, ClientService, ClientProduct, Payment, Service, User, Employee } = require('../models');
 
 // GET /api/clients?search=&status=&industry=&city=
 const getAll = async (req, res) => {
@@ -18,11 +18,29 @@ const getAll = async (req, res) => {
         { phone: { [Op.like]: `%${search}%` } }
       ];
     }
+
+    let includeClause = [
+      { model: ClientService, as: 'clientServices', include: [{ model: Service, as: 'service' }] }
+    ];
+
+    if (req.user.role === 'staff') {
+      const userRecord = await User.findByPk(req.user.id);
+      if (userRecord && userRecord.employee_id) {
+        const emp = await Employee.findByPk(userRecord.employee_id);
+        if (emp && emp.service_id) {
+          includeClause[0].where = { service_id: emp.service_id };
+          includeClause[0].required = true;
+        } else {
+          return res.json([]);
+        }
+      } else {
+        return res.json([]);
+      }
+    }
+
     const clients = await Client.findAll({
       where,
-      include: [
-        { model: ClientService, as: 'clientServices', include: [{ model: Service, as: 'service' }] }
-      ],
+      include: includeClause,
       order: [['company_name', 'ASC']]
     });
     res.json(clients);
@@ -34,6 +52,25 @@ const getAll = async (req, res) => {
 // GET /api/clients/:id (chi tiết + sản phẩm + thanh toán)
 const getById = async (req, res) => {
   try {
+    if (req.user.role === 'staff') {
+      const userRecord = await User.findByPk(req.user.id);
+      if (userRecord && userRecord.employee_id) {
+        const emp = await Employee.findByPk(userRecord.employee_id);
+        if (emp && emp.service_id) {
+          const hasService = await ClientService.findOne({
+            where: { client_id: req.params.id, service_id: emp.service_id }
+          });
+          if (!hasService) {
+            return res.status(403).json({ message: 'Bạn không được phân công quản lý khách hàng này' });
+          }
+        } else {
+          return res.status(403).json({ message: 'Bạn không được phân công quản lý khách hàng này' });
+        }
+      } else {
+        return res.status(403).json({ message: 'Bạn không được phân công quản lý khách hàng này' });
+      }
+    }
+
     const client = await Client.findByPk(req.params.id, {
       include: [
         { model: ClientService, as: 'clientServices', include: [{ model: Service, as: 'service' }] },

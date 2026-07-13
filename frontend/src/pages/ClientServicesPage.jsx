@@ -4,10 +4,14 @@ import Modal from '../components/Modal';
 import { Badge, Loading, ConfirmModal } from '../components/UI';
 import { Plus, Edit2, Trash2, Calculator } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useAuth } from '../context/AuthContext';
 
 const EMPTY = { client_id: '', service_id: '', num_employees: 1, start_date: '', end_date: '', status: 'active', notes: '' };
 
 export default function ClientServicesPage() {
+  const { user } = useAuth();
+  const isStaff = user?.role === 'staff';
+
   const [list, setList] = useState([]);
   const [clients, setClients] = useState([]);
   const [services, setServices] = useState([]);
@@ -66,16 +70,18 @@ export default function ClientServicesPage() {
     <div>
       <div className="page-header">
         <div><h2>📋 Đăng Ký Dịch Vụ</h2><p>Dịch vụ ECS mà khách hàng đã đăng ký</p></div>
-        <button id="add-cs-btn" className="btn btn-primary" onClick={openAdd}><Plus size={16} />Đăng Ký Mới</button>
+        {!isStaff && (
+          <button id="add-cs-btn" className="btn btn-primary" onClick={openAdd}><Plus size={16} />Đăng Ký Mới</button>
+        )}
       </div>
       <div className="table-container">
         <div className="table-header"><h3>Danh Sách Đăng Ký ({list.length})</h3></div>
         {loading ? <Loading /> : (
           <table>
-            <thead><tr><th>Khách Hàng</th><th>Dịch Vụ</th><th>Số NV</th><th>Ngày Bắt Đầu</th><th>Ngày Kết Thúc</th><th>Tổng Phí</th><th>Trạng Thái</th><th>Hành Động</th></tr></thead>
+            <thead><tr><th>Khách Hàng</th><th>Dịch Vụ</th><th>Số NV</th><th>Ngày Bắt Đầu</th><th>Ngày Kết Thúc</th><th>Tổng Phí</th><th>Trạng Thái</th>{!isStaff && <th>Hành Động</th>}</tr></thead>
             <tbody>
               {list.length === 0 ? (
-                <tr><td colSpan="8" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>Không có dữ liệu</td></tr>
+                <tr><td colSpan={isStaff ? 7 : 8} style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>Không có dữ liệu</td></tr>
               ) : list.map(cs => (
                 <tr key={cs.id}>
                   <td><strong>{cs.client?.company_name}</strong></td>
@@ -85,12 +91,14 @@ export default function ClientServicesPage() {
                   <td>{cs.end_date ? new Date(cs.end_date).toLocaleDateString('vi-VN') : <span style={{ color: 'var(--success)' }}>Đang chạy</span>}</td>
                   <td><strong style={{ color: 'var(--accent)' }}>{cs.total_charge ? `$${Number(cs.total_charge).toLocaleString()}` : '-'}</strong></td>
                   <td><Badge status={cs.status} /></td>
-                  <td>
-                    <div className="action-btns">
-                      <button id={`edit-cs-${cs.id}`} className="btn btn-sm btn-secondary" onClick={() => openEdit(cs)}><Edit2 size={13} /></button>
-                      <button id={`delete-cs-${cs.id}`} className="btn btn-sm btn-danger" onClick={() => setConfirmId(cs.id)}><Trash2 size={13} /></button>
-                    </div>
-                  </td>
+                  {!isStaff && (
+                    <td>
+                      <div className="action-btns">
+                        <button id={`edit-cs-${cs.id}`} className="btn btn-sm btn-secondary" onClick={() => openEdit(cs)}><Edit2 size={13} /></button>
+                        <button id={`delete-cs-${cs.id}`} className="btn btn-sm btn-danger" onClick={() => setConfirmId(cs.id)}><Trash2 size={13} /></button>
+                      </div>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

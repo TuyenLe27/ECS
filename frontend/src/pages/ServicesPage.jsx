@@ -4,10 +4,14 @@ import Modal from '../components/Modal';
 import { Badge, Loading, ConfirmModal } from '../components/UI';
 import { Plus, Edit2, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useAuth } from '../context/AuthContext';
 
 const EMPTY = { name: '', type: 'inbound', description: '', charge_per_day: '', is_active: 1 };
 
 export default function ServicesPage() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
+
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState({ open: false, mode: '', data: null });
@@ -47,7 +51,9 @@ export default function ServicesPage() {
     <div>
       <div className="page-header">
         <div><h2>⚙️ Dịch Vụ</h2><p>Quản lý biểu phí và loại dịch vụ ECS</p></div>
-        <button id="add-service-btn" className="btn btn-primary" onClick={openAdd}><Plus size={16} />Thêm Dịch Vụ</button>
+        {isAdmin && (
+          <button id="add-service-btn" className="btn btn-primary" onClick={openAdd}><Plus size={16} />Thêm Dịch Vụ</button>
+        )}
       </div>
 
       {/* Price summary cards - dynamic from DB */}
@@ -77,7 +83,7 @@ export default function ServicesPage() {
         <div className="table-header"><h3>Danh Sách Dịch Vụ ({services.length})</h3></div>
         {loading ? <Loading /> : (
           <table>
-            <thead><tr><th>Tên Dịch Vụ</th><th>Loại</th><th>Phí/Ngày/NV</th><th>Mô Tả</th><th>Trạng Thái</th><th>Hành Động</th></tr></thead>
+            <thead><tr><th>Tên Dịch Vụ</th><th>Loại</th><th>Phí/Ngày/NV</th><th>Mô Tả</th><th>Trạng Thái</th>{isAdmin && <th>Hành Động</th>}</tr></thead>
             <tbody>
               {services.map(s => (
                 <tr key={s.id}>
@@ -86,12 +92,14 @@ export default function ServicesPage() {
                   <td><strong style={{ color: 'var(--success)' }}>${Number(s.charge_per_day).toLocaleString()}</strong></td>
                   <td style={{ maxWidth: '300px' }}>{s.description || '-'}</td>
                   <td><Badge status={s.is_active ? 'active' : 'inactive'} /></td>
-                  <td>
-                    <div className="action-btns">
-                      <button id={`edit-service-${s.id}`} className="btn btn-sm btn-secondary" onClick={() => openEdit(s)}><Edit2 size={13} /></button>
-                      <button id={`delete-service-${s.id}`} className="btn btn-sm btn-danger" onClick={() => setConfirmId(s.id)}><Trash2 size={13} /></button>
-                    </div>
-                  </td>
+                  {isAdmin && (
+                    <td>
+                      <div className="action-btns">
+                        <button id={`edit-service-${s.id}`} className="btn btn-sm btn-secondary" onClick={() => openEdit(s)}><Edit2 size={13} /></button>
+                        <button id={`delete-service-${s.id}`} className="btn btn-sm btn-danger" onClick={() => setConfirmId(s.id)}><Trash2 size={13} /></button>
+                      </div>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

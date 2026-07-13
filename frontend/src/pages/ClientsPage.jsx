@@ -4,6 +4,7 @@ import Modal from '../components/Modal';
 import { Badge, Loading, ConfirmModal } from '../components/UI';
 import { Search, Plus, Edit2, Trash2, Eye } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useAuth } from '../context/AuthContext';
 
 const EMPTY_FORM = {
   client_code: '', company_name: '', contact_person: '', email: '',
@@ -11,10 +12,15 @@ const EMPTY_FORM = {
 };
 
 export default function ClientsPage() {
+  const { user } = useAuth();
+  const isStaff = user?.role === 'staff';
+
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [industryFilter, setIndustryFilter] = useState('');
+  const [cityFilter, setCityFilter] = useState('');
   const [modal, setModal] = useState({ open: false, mode: '', data: null });
   const [confirmId, setConfirmId] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
@@ -26,13 +32,15 @@ export default function ClientsPage() {
       const params = {};
       if (search) params.search = search;
       if (statusFilter) params.status = statusFilter;
+      if (industryFilter) params.industry = industryFilter;
+      if (cityFilter) params.city = cityFilter;
       const res = await clientsApi.getAll(params);
       setClients(res.data);
     } catch { toast.error('Lỗi tải dữ liệu'); }
     finally { setLoading(false); }
   };
 
-  useEffect(() => { fetchClients(); }, [search, statusFilter]);
+  useEffect(() => { fetchClients(); }, [search, statusFilter, industryFilter, cityFilter]);
 
   const openAdd = () => { setForm(EMPTY_FORM); setModal({ open: true, mode: 'add', data: null }); };
   const openEdit = (c) => { setForm({ ...c }); setModal({ open: true, mode: 'edit', data: c }); };
@@ -65,24 +73,30 @@ export default function ClientsPage() {
     <div>
       <div className="page-header">
         <div><h2>🏢 Khách Hàng</h2><p>Quản lý thông tin khách hàng của ECS</p></div>
-        <button id="add-client-btn" className="btn btn-primary" onClick={openAdd}>
-          <Plus size={16} /> Thêm Khách Hàng
-        </button>
+        {!isStaff && (
+          <button id="add-client-btn" className="btn btn-primary" onClick={openAdd}>
+            <Plus size={16} /> Thêm Khách Hàng
+          </button>
+        )}
       </div>
 
-      {/* Filters */}
-      <div className="filters-bar">
-        <div className="search-input-wrap">
+      {/* Filters & Advanced Search */}
+      <div className="filters-bar" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+        <div className="search-input-wrap" style={{ flex: '1 1 200px' }}>
           <Search size={16} />
           <input id="client-search" className="form-control search-input" placeholder="Tìm kiếm công ty, mã KH, email..."
             value={search} onChange={e => setSearch(e.target.value)} />
         </div>
-        <select id="status-filter" className="filter-select" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
+        <select id="status-filter" className="filter-select" value={statusFilter} onChange={e => setStatusFilter(e.target.value)} style={{ flex: '0 1 150px' }}>
           <option value="">Tất cả trạng thái</option>
           <option value="active">Active</option>
           <option value="inactive">Inactive</option>
           <option value="suspended">Suspended</option>
         </select>
+        <input id="industry-filter" className="filter-select form-control" placeholder="Tìm theo ngành nghề..."
+          value={industryFilter} onChange={e => setIndustryFilter(e.target.value)} style={{ flex: '0 1 150px', background: 'var(--card)', color: 'var(--text)', border: '1px solid var(--border)', borderRadius: '6px', padding: '0 12px' }} />
+        <input id="city-filter" className="filter-select form-control" placeholder="Tìm theo thành phố..."
+          value={cityFilter} onChange={e => setCityFilter(e.target.value)} style={{ flex: '0 1 150px', background: 'var(--card)', color: 'var(--text)', border: '1px solid var(--border)', borderRadius: '6px', padding: '0 12px' }} />
       </div>
 
       <div className="table-container">
@@ -95,12 +109,12 @@ export default function ClientsPage() {
               <tr>
                 <th>Mã KH</th><th>Tên Công Ty</th><th>Người Liên Hệ</th>
                 <th>Email</th><th>Thành Phố</th><th>Ngành</th>
-                <th>Dịch Vụ</th><th>Trạng Thái</th><th>Hành Động</th>
+                <th>Dịch Vụ</th><th>Trạng Thái</th>{!isStaff && <th>Hành Động</th>}
               </tr>
             </thead>
             <tbody>
               {clients.length === 0 ? (
-                <tr><td colSpan="9" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>Không có dữ liệu</td></tr>
+                <tr><td colSpan={isStaff ? 8 : 9} style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>Không có dữ liệu</td></tr>
               ) : clients.map(c => (
                 <tr key={c.id}>
                   <td><strong>{c.client_code}</strong></td>
@@ -115,16 +129,18 @@ export default function ClientsPage() {
                       : <span className="text-muted">-</span>}
                   </td>
                   <td><Badge status={c.status} /></td>
-                  <td>
-                    <div className="action-btns">
-                      <button id={`edit-client-${c.id}`} className="btn btn-sm btn-secondary" onClick={() => openEdit(c)} title="Sửa">
-                        <Edit2 size={13} />
-                      </button>
-                      <button id={`delete-client-${c.id}`} className="btn btn-sm btn-danger" onClick={() => setConfirmId(c.id)} title="Xóa">
-                        <Trash2 size={13} />
-                      </button>
-                    </div>
-                  </td>
+                  {!isStaff && (
+                    <td>
+                      <div className="action-btns">
+                        <button id={`edit-client-${c.id}`} className="btn btn-sm btn-secondary" onClick={() => openEdit(c)} title="Sửa">
+                          <Edit2 size={13} />
+                        </button>
+                        <button id={`delete-client-${c.id}`} className="btn btn-sm btn-danger" onClick={() => setConfirmId(c.id)} title="Xóa">
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
