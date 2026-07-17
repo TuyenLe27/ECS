@@ -147,7 +147,7 @@ npm run dev
 ```bash
 docker compose -f docker-compose-hub.yml up -d
 ```
-*Hệ thống tự động kéo images từ Docker Hub (`tuyenlv372/ecs-backend` và `tuyenlv372/ecs-frontend`) về và chạy luôn.*
+*Hệ thống tự động kéo images từ Docker Hub (`YOUR_DOCKERHUB_USERNAME/ecs-backend` và `YOUR_DOCKERHUB_USERNAME/ecs-frontend`) về và chạy luôn.*
 
 ---
 
@@ -198,23 +198,22 @@ git pull origin main
 #### a. Đăng nhập Docker Hub (chỉ cần làm 1 lần)
 ```bash
 docker login
-# Nhập Docker Hub username: tuyenlv372
-# Nhập password của Docker Hub
+# Nhập Docker Hub username và password của bạn
 ```
 
 #### b. Build images mới từ code hiện tại
 ```bash
 # Build backend image
-docker build -t tuyenlv372/ecs-backend:latest ./backend
+docker build -t YOUR_DOCKERHUB_USERNAME/ecs-backend:latest ./backend
 
 # Build frontend image
-docker build -t tuyenlv372/ecs-frontend:latest ./frontend
+docker build -t YOUR_DOCKERHUB_USERNAME/ecs-frontend:latest ./frontend
 ```
 
 #### c. Push images lên Docker Hub
 ```bash
-docker push tuyenlv372/ecs-backend:latest
-docker push tuyenlv372/ecs-frontend:latest
+docker push YOUR_DOCKERHUB_USERNAME/ecs-backend:latest
+docker push YOUR_DOCKERHUB_USERNAME/ecs-frontend:latest
 ```
 
 #### d. Khởi động lại hệ thống với code mới
@@ -234,10 +233,10 @@ git commit -m "feat: mô tả thay đổi"
 git push origin main
 
 # 2. Build và push Docker images lên Docker Hub
-docker build -t tuyenlv372/ecs-backend:latest ./backend
-docker build -t tuyenlv372/ecs-frontend:latest ./frontend
-docker push tuyenlv372/ecs-backend:latest
-docker push tuyenlv372/ecs-frontend:latest
+docker build -t YOUR_DOCKERHUB_USERNAME/ecs-backend:latest ./backend
+docker build -t YOUR_DOCKERHUB_USERNAME/ecs-frontend:latest ./frontend
+docker push YOUR_DOCKERHUB_USERNAME/ecs-backend:latest
+docker push YOUR_DOCKERHUB_USERNAME/ecs-frontend:latest
 
 # 3. Restart lại hệ thống (nếu đang dùng Docker)
 docker compose down
