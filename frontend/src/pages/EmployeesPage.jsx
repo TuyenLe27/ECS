@@ -19,6 +19,7 @@ export default function EmployeesPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [deptFilter, setDeptFilter] = useState('');
+  const [serviceFilter, setServiceFilter] = useState('');
   const [modal, setModal] = useState({ open: false, mode: '', data: null });
   const [confirmId, setConfirmId] = useState(null);
   const [form, setForm] = useState(EMPTY);
@@ -31,6 +32,7 @@ export default function EmployeesPage() {
       if (search) params.search = search;
       if (statusFilter) params.status = statusFilter;
       if (deptFilter) params.dept_id = deptFilter;
+      if (serviceFilter) params.service_id = serviceFilter;
       const [eRes, dRes, sRes] = await Promise.all([
         employeesApi.getAll(params), departmentsApi.getAll(), servicesApi.getAll()
       ]);
@@ -39,7 +41,7 @@ export default function EmployeesPage() {
     finally { setLoading(false); }
   };
 
-  useEffect(() => { fetchData(); }, [search, statusFilter, deptFilter]);
+  useEffect(() => { fetchData(); }, [search, statusFilter, deptFilter, serviceFilter]);
 
   const openAdd = () => { setForm(EMPTY); setModal({ open: true, mode: 'add' }); };
   const openEdit = (e) => { setForm({ ...e, dept_id: e.dept_id || '', service_id: e.service_id || '' }); setModal({ open: true, mode: 'edit', data: e }); };
@@ -78,6 +80,10 @@ export default function EmployeesPage() {
           <option value="">Tất cả phòng ban</option>
           {depts.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
         </select>
+        <select id="emp-service-filter" className="filter-select" value={serviceFilter} onChange={e => setServiceFilter(e.target.value)}>
+          <option value="">Tất cả dịch vụ</option>
+          {services.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+        </select>
         <select id="emp-status-filter" className="filter-select" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
           <option value="">Tất cả trạng thái</option>
           <option value="active">Active</option>
@@ -85,6 +91,7 @@ export default function EmployeesPage() {
           <option value="on_leave">On Leave</option>
         </select>
       </div>
+
       <div className="table-container">
         <div className="table-header"><h3>Danh Sách Nhân Viên ({employees.length})</h3></div>
         {loading ? <Loading /> : (

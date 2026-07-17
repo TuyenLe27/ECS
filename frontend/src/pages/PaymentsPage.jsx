@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { paymentsApi, clientsApi, clientServicesApi } from '../api';
+import { paymentsApi, clientsApi } from '../api';
 import Modal from '../components/Modal';
 import { Badge, Loading, ConfirmModal } from '../components/UI';
-import { Plus, Edit2, Trash2, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Plus, Edit2, Trash2, CheckCircle, AlertTriangle, Search, Bell } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const EMPTY_FORM = {
@@ -15,7 +15,12 @@ export default function PaymentsPage() {
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('');
+  const [clientFilter, setClientFilter] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   const [modal, setModal] = useState({ open: false, mode: '', data: null });
+  const [reminderModal, setReminderModal] = useState({ open: false, email: null, clientName: '' });
   const [confirmId, setConfirmId] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
@@ -25,13 +30,16 @@ export default function PaymentsPage() {
     try {
       const params = {};
       if (statusFilter) params.status = statusFilter;
+      if (clientFilter) params.client_id = clientFilter;
+      if (dateFrom) params.from = dateFrom;
+      if (dateTo) params.to = dateTo;
       const [pRes, cRes] = await Promise.all([paymentsApi.getAll(params), clientsApi.getAll()]);
       setPayments(pRes.data); setClients(cRes.data);
     } catch { toast.error('Lỗi tải dữ liệu'); }
     finally { setLoading(false); }
   };
 
-  useEffect(() => { fetchData(); }, [statusFilter]);
+  useEffect(() => { fetchData(); }, [statusFilter, clientFilter, dateFrom, dateTo]);
 
   const openAdd = () => { setForm(EMPTY_FORM); setModal({ open: true, mode: 'add', data: null }); };
   const openEdit = (p) => { setForm({ ...p, client_id: p.client_id || '', amount: p.amount || '' }); setModal({ open: true, mode: 'edit', data: p }); };
@@ -42,6 +50,17 @@ export default function PaymentsPage() {
       await paymentsApi.update(id, { status: 'paid', paid_date: new Date().toISOString().split('T')[0] });
       toast.success('Đánh dấu đã thanh toán!'); fetchData();
     } catch { toast.error('Có lỗi xảy ra'); }
+  };
+
+  const sendReminder = async (p) => {
+    try {
+      const res = await paymentsApi.sendReminder(p.id);
+      setReminderModal({ open: true, email: res.data.email, clientName: p.client?.company_name });
+      toast.success('Đã gửi email nhắc nợ và tạo Call Log!');
+      fetchData();
+    } catch {
+      toast.error('Gửi nhắc nợ thất bại');
+    }
   };
 
   const handleSave = async () => {
@@ -61,6 +80,14 @@ export default function PaymentsPage() {
     } catch { toast.error('Không thể xóa'); }
   };
 
+  // Client-side search filter on invoice_no and company_name
+  const filtered = payments.filter(p => {
+    if (!searchTerm) return true;
+    const term = searchTerm.toLowerCase();
+    return p.invoice_no?.toLowerCase().includes(term) ||
+           p.client?.company_name?.toLowerCase().includes(term);
+  });
+
   const overdueCount = payments.filter(p => p.status === 'overdue').length;
 
   return (
@@ -74,13 +101,25 @@ export default function PaymentsPage() {
       </div>
 
       {overdueCount > 0 && (
-        <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '10px', padding: '12px 16px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <AlertTriangle size={18} color="#ef4444" />
-          <span style={{ color: '#ef4444', fontWeight: 600 }}>{overdueCount} hóa đơn đã quá hạn thanh toán!</span>
+        <div className="alert-banner danger">
+          <AlertTriangle size={18} />
+          <span>{overdueCount} hóa đơn đã quá hạn thanh toán!</span>
         </div>
       )}
 
-      <div className="filters-bar">
+      {/* Advanced Search & Filters */}
+      <div className="filters-bar" style={{ flexWrap: 'wrap', gap: '8px' }}>
+        <div className="search-input-wrap" style={{ flex: '1 1 200px' }}>
+          <Search size={16} />
+          <input id="payment-search" className="form-control search-input"
+            placeholder="Tìm số HĐ, tên khách hàng..."
+            value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
+            style={{ width: '100%' }} />
+        </div>
+        <select id="payment-client-filter" className="filter-select" value={clientFilter} onChange={e => setClientFilter(e.target.value)}>
+          <option value="">Tất cả khách hàng</option>
+          {clients.map(c => <option key={c.id} value={c.id}>{c.company_name}</option>)}
+        </select>
         <select id="payment-status-filter" className="filter-select" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
           <option value="">Tất cả trạng thái</option>
           <option value="pending">Pending</option>
@@ -88,32 +127,60 @@ export default function PaymentsPage() {
           <option value="overdue">Overdue</option>
           <option value="partial">Partial</option>
         </select>
+        <div className="date-range-group">
+          <label>Từ</label>
+          <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} />
+          <label style={{ marginLeft: 4 }}>Đến</label>
+          <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} />
+          {(dateFrom || dateTo) && (
+            <button className="btn btn-sm btn-secondary" style={{ padding: '2px 8px', fontSize: '11px' }}
+              onClick={() => { setDateFrom(''); setDateTo(''); }}>✕</button>
+          )}
+        </div>
       </div>
 
       <div className="table-container">
-        <div className="table-header"><h3>Danh Sách Hóa Đơn ({payments.length})</h3></div>
+        <div className="table-header">
+          <h3>Danh Sách Hóa Đơn ({filtered.length}{filtered.length !== payments.length ? ` / ${payments.length}` : ''})</h3>
+        </div>
         {loading ? <Loading /> : (
           <table>
             <thead>
-              <tr><th>Số HĐ</th><th>Khách Hàng</th><th>Số Tiền</th><th>Hạn TT</th><th>Ngày TT</th><th>Phương Thức</th><th>Trạng Thái</th><th>Hành Động</th></tr>
+              <tr>
+                <th>Số HĐ</th><th>Khách Hàng</th><th>Số Tiền</th>
+                <th>Hạn TT</th><th>Ngày TT</th><th>Phương Thức</th>
+                <th>Trạng Thái</th><th>Hành Động</th>
+              </tr>
             </thead>
             <tbody>
-              {payments.length === 0 ? (
+              {filtered.length === 0 ? (
                 <tr><td colSpan="8" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>Không có dữ liệu</td></tr>
-              ) : payments.map(p => (
+              ) : filtered.map(p => (
                 <tr key={p.id}>
                   <td><strong>{p.invoice_no}</strong></td>
-                  <td>{p.client?.company_name || '-'}</td>
+                  <td><strong>{p.client?.company_name || '-'}</strong></td>
                   <td><strong style={{ color: 'var(--success)' }}>${Number(p.amount).toLocaleString()}</strong></td>
-                  <td style={{ color: p.status === 'overdue' ? 'var(--danger)' : 'inherit' }}>{new Date(p.due_date).toLocaleDateString('vi-VN')}</td>
+                  <td style={{ color: p.status === 'overdue' ? 'var(--danger)' : 'inherit' }}>
+                    {new Date(p.due_date).toLocaleDateString('vi-VN')}
+                    {p.status === 'overdue' && (
+                      <span style={{ marginLeft: 4, fontSize: '10px', background: 'rgba(239,68,68,0.1)', color: '#ef4444', padding: '1px 5px', borderRadius: 4 }}>
+                        {Math.floor((Date.now() - new Date(p.due_date)) / 86400000)} ngày
+                      </span>
+                    )}
+                  </td>
                   <td>{p.paid_date ? new Date(p.paid_date).toLocaleDateString('vi-VN') : <span className="text-muted">-</span>}</td>
-                  <td>{p.payment_method}</td>
+                  <td style={{ fontSize: '12px' }}>{p.payment_method}</td>
                   <td><Badge status={p.status} /></td>
                   <td>
                     <div className="action-btns">
                       {p.status !== 'paid' && (
                         <button id={`mark-paid-${p.id}`} className="btn btn-sm btn-success" onClick={() => markPaid(p.id)} title="Đánh dấu đã TT">
                           <CheckCircle size={13} />
+                        </button>
+                      )}
+                      {p.status === 'overdue' && (
+                        <button id={`remind-${p.id}`} className="btn btn-sm btn-warning" onClick={() => sendReminder(p)} title="Gửi nhắc nợ qua email">
+                          <Bell size={13} />
                         </button>
                       )}
                       <button id={`edit-payment-${p.id}`} className="btn btn-sm btn-secondary" onClick={() => openEdit(p)} title="Sửa"><Edit2 size={13} /></button>
@@ -189,6 +256,25 @@ export default function PaymentsPage() {
       </Modal>
 
       <ConfirmModal isOpen={!!confirmId} onClose={() => setConfirmId(null)} onConfirm={handleDelete} message="Bạn có chắc muốn xóa hóa đơn này không?" />
+
+      {/* Reminder Email Modal */}
+      <Modal isOpen={reminderModal.open} onClose={() => setReminderModal({ open: false, email: null })}
+        title={`✉️ Preview Email Nhắc Nợ - ${reminderModal.clientName}`}
+        footer={<button className="btn btn-primary" onClick={() => setReminderModal({ open: false, email: null })}>Đóng</button>}>
+        {reminderModal.email && (
+          <div style={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '16px' }}>
+            <p style={{ margin: 0, paddingBottom: '8px', borderBottom: '1px solid var(--border)', fontSize: '13px' }}>
+              <strong>Tiêu đề:</strong> <span style={{ color: 'var(--success)' }}>{reminderModal.email.subject}</span>
+            </p>
+            <div style={{ marginTop: '12px', fontSize: '13px', whiteSpace: 'pre-wrap', lineHeight: '1.6', color: '#f1f5f9' }}>
+              {reminderModal.email.body}
+            </div>
+            <p style={{ marginTop: '16px', margin: 0, padding: '8px', background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.3)', borderRadius: '6px', fontSize: '11px', color: '#3b82f6', textAlign: 'center' }}>
+              ℹ️ Một cuộc gọi đi (Outbound Call Log) đã được ghi nhận tự động vào hệ thống.
+            </p>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }

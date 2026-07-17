@@ -4,15 +4,21 @@ import Modal from '../components/Modal';
 import { Badge, Loading, ConfirmModal } from '../components/UI';
 import { Plus, Edit2, Trash2, Phone } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useAuth } from '../context/AuthContext';
 
 const EMPTY = { client_id: '', employee_id: '', call_type: 'inbound', call_datetime: '', duration_minutes: 0, purpose: '', outcome: 'resolved', notes: '' };
 
 export default function CallLogsPage() {
+  const { user } = useAuth();
+  const isStaff = user?.role === 'staff';
   const [logs, setLogs] = useState([]);
   const [clients, setClients] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [typeFilter, setTypeFilter] = useState('');
+  const [employeeFilter, setEmployeeFilter] = useState('');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   const [modal, setModal] = useState({ open: false, mode: '', data: null });
   const [confirmId, setConfirmId] = useState(null);
   const [form, setForm] = useState(EMPTY);
@@ -23,6 +29,9 @@ export default function CallLogsPage() {
     try {
       const params = {};
       if (typeFilter) params.call_type = typeFilter;
+      if (employeeFilter) params.employee_id = employeeFilter;
+      if (dateFrom) params.from = dateFrom;
+      if (dateTo) params.to = dateTo;
       const [lRes, cRes, eRes] = await Promise.all([
         callLogsApi.getAll(params), clientsApi.getAll(), employeesApi.getAll()
       ]);
@@ -31,9 +40,13 @@ export default function CallLogsPage() {
     finally { setLoading(false); }
   };
 
-  useEffect(() => { fetchData(); }, [typeFilter]);
+  useEffect(() => { fetchData(); }, [typeFilter, employeeFilter, dateFrom, dateTo]);
 
-  const openAdd = () => { setForm({ ...EMPTY, call_datetime: new Date().toISOString().slice(0, 16) }); setModal({ open: true, mode: 'add' }); };
+  const openAdd = () => {
+    const base = { ...EMPTY, call_datetime: new Date().toISOString().slice(0, 16) };
+    setForm(base);
+    setModal({ open: true, mode: 'add' });
+  };
   const openEdit = (l) => { setForm({ ...l, call_datetime: l.call_datetime?.slice(0, 16) }); setModal({ open: true, mode: 'edit', data: l }); };
   const closeModal = () => setModal({ open: false, mode: '', data: null });
 
@@ -57,17 +70,34 @@ export default function CallLogsPage() {
   return (
     <div>
       <div className="page-header">
-        <div><h2>📞 Call Logs</h2><p>Lịch sử các cuộc gọi</p></div>
+        <div><h2>📞 Call Logs</h2><p>Lịch sử các cuộc gọi in-bound, out-bound và tele marketing</p></div>
         <button id="add-calllog-btn" className="btn btn-primary" onClick={openAdd}><Plus size={16} />Thêm Call Log</button>
       </div>
-      <div className="filters-bar">
+      <div className="filters-bar" style={{ flexWrap: 'wrap', gap: '8px' }}>
         <select id="calltype-filter" className="filter-select" value={typeFilter} onChange={e => setTypeFilter(e.target.value)}>
           <option value="">Tất cả loại</option>
           <option value="inbound">In-bound</option>
           <option value="outbound">Out-bound</option>
           <option value="telemarketing">Tele Marketing</option>
         </select>
+        {!isStaff && (
+          <select id="calllog-employee-filter" className="filter-select" value={employeeFilter} onChange={e => setEmployeeFilter(e.target.value)}>
+            <option value="">Tất cả nhân viên</option>
+            {employees.map(e => <option key={e.id} value={e.id}>{e.last_name} {e.first_name}</option>)}
+          </select>
+        )}
+        <div className="date-range-group">
+          <label>Từ</label>
+          <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} />
+          <label style={{ marginLeft: 4 }}>Đến</label>
+          <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} />
+          {(dateFrom || dateTo) && (
+            <button className="btn btn-sm btn-secondary" style={{ padding: '2px 8px', fontSize: '11px' }}
+              onClick={() => { setDateFrom(''); setDateTo(''); }}>✕</button>
+          )}
+        </div>
       </div>
+
       <div className="table-container">
         <div className="table-header"><h3>Lịch Sử Cuộc Gọi ({logs.length})</h3></div>
         {loading ? <Loading /> : (
@@ -109,11 +139,14 @@ export default function CallLogsPage() {
               <option value="">Chọn khách hàng...</option>
               {clients.map(c => <option key={c.id} value={c.id}>{c.company_name}</option>)}
             </select></div>
-          <div className="form-group"><label className="form-label">Nhân Viên *</label>
-            <select className="form-control" value={form.employee_id} onChange={e => setForm({ ...form, employee_id: e.target.value })}>
-              <option value="">Chọn nhân viên...</option>
-              {employees.map(e => <option key={e.id} value={e.id}>{e.last_name} {e.first_name} ({e.emp_code})</option>)}
-            </select></div>
+          {!isStaff && (
+            <div className="form-group"><label className="form-label">Nhân Viên *</label>
+              <select className="form-control" value={form.employee_id} onChange={e => setForm({ ...form, employee_id: e.target.value })}>
+                <option value="">Chọn nhân viên...</option>
+                {employees.map(e => <option key={e.id} value={e.id}>{e.last_name} {e.first_name} ({e.emp_code})</option>)}
+              </select>
+            </div>
+          )}
         </div>
         <div className="form-row">
           <div className="form-group"><label className="form-label">Loại Cuộc Gọi *</label>

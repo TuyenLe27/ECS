@@ -52,12 +52,20 @@ export const clientProductsApi = {
   delete: (id) => api.delete(`/client-products/${id}`),
 };
 
+export const clientProceduresApi = {
+  getAll: (params) => api.get('/client-procedures', { params }),
+  create: (data) => api.post('/client-procedures', data),
+  update: (id, data) => api.put(`/client-procedures/${id}`, data),
+  delete: (id) => api.delete(`/client-procedures/${id}`),
+};
+
 export const paymentsApi = {
   getAll: (params) => api.get('/payments', { params }),
   getOverdue: () => api.get('/payments/overdue'),
   create: (data) => api.post('/payments', data),
   update: (id, data) => api.put(`/payments/${id}`, data),
   delete: (id) => api.delete(`/payments/${id}`),
+  sendReminder: (id) => api.post(`/payments/${id}/remind`),
 };
 
 export const callLogsApi = {
@@ -69,6 +77,8 @@ export const callLogsApi = {
 
 export const reportsApi = {
   getDashboard: () => api.get('/reports/dashboard'),
+  getEmployeePerformance: () => api.get('/reports/employee-performance'),
+  getPreview: (type, params) => api.get('/reports/preview', { params: { type, ...params } }),
   exportExcel: (type, params) => api.get('/reports/export-excel', {
     params: { type, ...params }, responseType: 'blob'
   }),
@@ -76,3 +86,4 @@ export const reportsApi = {
     params: { type, ...params }, responseType: 'blob'
   }),
 };
+

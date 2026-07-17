@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { clientProductsApi, clientsApi } from '../api';
 import Modal from '../components/Modal';
 import { Badge, Loading, ConfirmModal } from '../components/UI';
-import { Plus, Edit2, Trash2 } from 'lucide-react';
+import { Plus, Edit2, Trash2, Search } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 
@@ -15,6 +15,7 @@ export default function ClientProductsPage() {
   const [products, setProducts] = useState([]);
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
   const [clientFilter, setClientFilter] = useState('');
   const [modal, setModal] = useState({ open: false, mode: '', data: null });
   const [confirmId, setConfirmId] = useState(null);
@@ -26,13 +27,15 @@ export default function ClientProductsPage() {
     try {
       const params = {};
       if (clientFilter) params.client_id = clientFilter;
+      if (search) params.search = search;
       const [pRes, cRes] = await Promise.all([clientProductsApi.getAll(params), clientsApi.getAll()]);
       setProducts(pRes.data); setClients(cRes.data);
     } catch { toast.error('Lỗi tải dữ liệu'); }
     finally { setLoading(false); }
   };
 
-  useEffect(() => { fetchData(); }, [clientFilter]);
+  useEffect(() => { fetchData(); }, [clientFilter, search]);
+
 
   const openAdd = () => { setForm(EMPTY); setModal({ open: true, mode: 'add' }); };
   const openEdit = (p) => { setForm({ ...p }); setModal({ open: true, mode: 'edit', data: p }); };
@@ -61,12 +64,18 @@ export default function ClientProductsPage() {
           <button id="add-product-btn" className="btn btn-primary" onClick={openAdd}><Plus size={16} />Thêm Sản Phẩm</button>
         )}
       </div>
-      <div className="filters-bar">
+      <div className="filters-bar" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+        <div className="search-input-wrap" style={{ flex: '1 1 200px' }}>
+          <Search size={16} />
+          <input id="product-search" className="form-control search-input" placeholder="Tìm sản phẩm, danh mục..."
+            value={search} onChange={e => setSearch(e.target.value)} style={{ width: '100%' }} />
+        </div>
         <select id="product-client-filter" className="filter-select" value={clientFilter} onChange={e => setClientFilter(e.target.value)}>
           <option value="">Tất cả khách hàng</option>
           {clients.map(c => <option key={c.id} value={c.id}>{c.company_name}</option>)}
         </select>
       </div>
+
       <div className="table-container">
         <div className="table-header"><h3>Danh Sách Sản Phẩm ({products.length})</h3></div>
         {loading ? <Loading /> : (

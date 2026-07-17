@@ -9,6 +9,34 @@ import { Users, Briefcase, Settings, AlertTriangle } from 'lucide-react';
 
 const COLORS = ['#2563eb', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
+const CustomTooltip = ({ active, payload, label }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div style={{ 
+        background: '#111827', 
+        border: '1px solid rgba(255, 255, 255, 0.15)', 
+        padding: '10px 14px', 
+        borderRadius: '8px',
+        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)'
+      }}>
+        <p style={{ margin: 0, color: '#94a3b8', fontSize: '12px', fontWeight: 600, marginBottom: '4px' }}>
+          {label}
+        </p>
+        {payload.map((pld) => (
+          <p key={pld.name} style={{ margin: 0, color: '#f1f5f9', fontSize: '13px', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ color: pld.color || pld.payload?.fill || '#2563eb' }}>●</span>
+            <span>{pld.name === 'revenue' ? 'Doanh thu' : pld.name === 'count' ? 'Số lượng' : pld.name}:</span>
+            <strong style={{ color: '#ffffff' }}>
+              {pld.name === 'revenue' ? `$${Number(pld.value).toLocaleString()}` : pld.value}
+            </strong>
+          </p>
+        ))}
+      </div>
+    );
+  }
+  return null;
+};
+
 export default function DashboardPage() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -16,6 +44,7 @@ export default function DashboardPage() {
   useEffect(() => {
     reportsApi.getDashboard().then(r => { setData(r.data); setLoading(false); });
   }, []);
+
 
   if (loading) return <Loading />;
 
@@ -67,8 +96,7 @@ export default function DashboardPage() {
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
               <XAxis dataKey="month" tick={{ fill: '#64748b', fontSize: 11 }} />
               <YAxis tick={{ fill: '#64748b', fontSize: 11 }} tickFormatter={v => `$${(v/1000).toFixed(0)}k`} />
-              <Tooltip formatter={(v) => [`$${Number(v).toLocaleString()}`, 'Doanh thu']}
-                contentStyle={{ background: '#111827', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#f1f5f9' }} />
+              <Tooltip content={<CustomTooltip />} />
               <Area type="monotone" dataKey="revenue" stroke="#2563eb" fill="url(#rev)" strokeWidth={2} />
             </AreaChart>
           </ResponsiveContainer>
@@ -76,14 +104,15 @@ export default function DashboardPage() {
 
         {/* Payment Status */}
         <div className="card">
-          <h3 style={{ marginBottom: '20px', fontSize: '15px', fontWeight: 600 }}>💳 Trạng Thái Thanh Toán</h3>
+          <h3 style={{ marginBottom: '20px', fontSize: '15px', fontWeight: 600 }}>💳 Trạng Thế Thanh Toán</h3>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={paymentData} barSize={36}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
               <XAxis dataKey="name" tick={{ fill: '#64748b', fontSize: 11 }} />
               <YAxis tick={{ fill: '#64748b', fontSize: 11 }} />
-              <Tooltip contentStyle={{ background: '#111827', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#f1f5f9' }} />
+              <Tooltip content={<CustomTooltip />} />
               <Bar dataKey="count" radius={[6, 6, 0, 0]}>
+
                 {paymentData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
               </Bar>
             </BarChart>
@@ -94,16 +123,28 @@ export default function DashboardPage() {
       {/* Services Pie */}
       <div className="grid-2">
         <div className="card">
-          <h3 style={{ marginBottom: '20px', fontSize: '15px', fontWeight: 600 }}>🎯 Phân Bổ Dịch Vụ</h3>
+          <h3 style={{ marginBottom: '16px', fontSize: '15px', fontWeight: 600 }}>🎯 Phân Bổ Dịch Vụ</h3>
           {serviceData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={220}>
+            <ResponsiveContainer width="100%" height={280}>
               <PieChart>
-                <Pie data={serviceData} cx="50%" cy="50%" innerRadius={60} outerRadius={90}
-                  dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  labelLine={false}>
+                <Pie data={serviceData} cx="50%" cy="52%" innerRadius={65} outerRadius={100}
+                  dataKey="value" labelLine={false}>
                   {serviceData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                 </Pie>
-                <Tooltip contentStyle={{ background: '#111827', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#f1f5f9' }} />
+                <Tooltip
+                  formatter={(value, name) => [value, name]}
+                  contentStyle={{ background: '#111827', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#f1f5f9' }} />
+                <Legend
+                  layout="horizontal"
+                  verticalAlign="bottom"
+                  align="center"
+                  iconType="circle"
+                  iconSize={10}
+                  wrapperStyle={{ fontSize: '12px', paddingTop: '12px', color: 'var(--text-muted)' }}
+                  formatter={(value, entry) => (
+                    <span style={{ color: '#f1f5f9' }}>{value} ({entry.payload.value})</span>
+                  )}
+                />
               </PieChart>
             </ResponsiveContainer>
           ) : <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '60px 0' }}>Chưa có dữ liệu</p>}

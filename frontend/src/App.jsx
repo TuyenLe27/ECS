@@ -9,11 +9,14 @@ import ServicesPage from './pages/ServicesPage';
 import DepartmentsPage from './pages/DepartmentsPage';
 import EmployeesPage from './pages/EmployeesPage';
 import ClientsPage from './pages/ClientsPage';
+import ClientDetailPage from './pages/ClientDetailPage';
 import ClientServicesPage from './pages/ClientServicesPage';
 import ClientProductsPage from './pages/ClientProductsPage';
+import ClientProceduresPage from './pages/ClientProceduresPage';
 import PaymentsPage from './pages/PaymentsPage';
 import CallLogsPage from './pages/CallLogsPage';
 import ReportsPage from './pages/ReportsPage';
+
 
 function ProtectedLayout({ children }) {
   const { user, loading } = useAuth();
@@ -53,8 +56,10 @@ function AppRoutes() {
       <Route path="/departments" element={<ProtectedLayout><RoleProtectedRoute allowedRoles={['admin', 'manager']}><DepartmentsPage /></RoleProtectedRoute></ProtectedLayout>} />
       <Route path="/employees" element={<ProtectedLayout><RoleProtectedRoute allowedRoles={['admin', 'manager']}><EmployeesPage /></RoleProtectedRoute></ProtectedLayout>} />
       <Route path="/clients" element={<ProtectedLayout><RoleProtectedRoute allowedRoles={['admin', 'manager', 'staff']}><ClientsPage /></RoleProtectedRoute></ProtectedLayout>} />
+      <Route path="/clients/:id" element={<ProtectedLayout><RoleProtectedRoute allowedRoles={['admin', 'manager', 'staff']}><ClientDetailPage /></RoleProtectedRoute></ProtectedLayout>} />
       <Route path="/client-services" element={<ProtectedLayout><RoleProtectedRoute allowedRoles={['admin', 'manager', 'staff']}><ClientServicesPage /></RoleProtectedRoute></ProtectedLayout>} />
       <Route path="/client-products" element={<ProtectedLayout><RoleProtectedRoute allowedRoles={['admin', 'manager', 'staff']}><ClientProductsPage /></RoleProtectedRoute></ProtectedLayout>} />
+      <Route path="/client-procedures" element={<ProtectedLayout><RoleProtectedRoute allowedRoles={['admin', 'manager', 'staff']}><ClientProceduresPage /></RoleProtectedRoute></ProtectedLayout>} />
       <Route path="/payments" element={<ProtectedLayout><RoleProtectedRoute allowedRoles={['admin', 'manager']}><PaymentsPage /></RoleProtectedRoute></ProtectedLayout>} />
       <Route path="/call-logs" element={<ProtectedLayout><RoleProtectedRoute allowedRoles={['admin', 'manager', 'staff']}><CallLogsPage /></RoleProtectedRoute></ProtectedLayout>} />
       <Route path="/reports" element={<ProtectedLayout><RoleProtectedRoute allowedRoles={['admin', 'manager']}><ReportsPage /></RoleProtectedRoute></ProtectedLayout>} />

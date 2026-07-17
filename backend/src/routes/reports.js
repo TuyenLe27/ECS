@@ -4,7 +4,8 @@ const c = require('../controllers/reportController');
 const { authenticate, authorize } = require('../middleware/auth');
 router.use(authenticate);
 router.get('/dashboard', c.getDashboard);
+router.get('/employee-performance', authorize('admin', 'manager'), c.getEmployeePerformance);
+router.get('/preview', authorize('admin', 'manager'), c.getReportPreview);
 router.get('/export-excel', authorize('admin', 'manager'), c.exportExcel);
 router.get('/export-pdf', authorize('admin', 'manager'), c.exportPdf);
 module.exports = router;
-

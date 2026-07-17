@@ -7,6 +7,7 @@ router.use(authorize('admin', 'manager'));
 router.get('/', c.getAll);
 router.get('/overdue', c.getOverdue);
 router.post('/', c.create);
+router.post('/:id/remind', c.sendReminder);
 router.put('/:id', c.update);
 router.delete('/:id', c.remove);
 module.exports = router;

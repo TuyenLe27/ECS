@@ -41,6 +41,7 @@ app.use('/api/employees', require('./src/routes/employees'));
 app.use('/api/clients', require('./src/routes/clients'));
 app.use('/api/client-services', require('./src/routes/clientServices'));
 app.use('/api/client-products', require('./src/routes/clientProducts'));
+app.use('/api/client-procedures', require('./src/routes/clientProcedures'));
 app.use('/api/payments', require('./src/routes/payments'));
 app.use('/api/call-logs', require('./src/routes/callLogs'));
 app.use('/api/reports', require('./src/routes/reports'));

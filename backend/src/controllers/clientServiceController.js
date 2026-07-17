@@ -1,4 +1,4 @@
-const { ClientService, Client, Service, User, Employee } = require('../models');
+const { ClientService, Client, Service, User, Employee, Payment } = require('../models');
 const moment = require('moment');
 
 // Tính tổng phí: charge_per_day × num_employees × total_days
@@ -24,13 +24,10 @@ const getAll = async (req, res) => {
         const emp = await Employee.findByPk(userRecord.employee_id);
         if (emp && emp.service_id) {
           where.service_id = emp.service_id;
-        } else {
-          return res.json([]);
         }
-      } else {
-        return res.json([]);
       }
     }
+
     const list = await ClientService.findAll({
       where,
       include: [
@@ -55,7 +52,24 @@ const create = async (req, res) => {
       req.body.start_date, req.body.end_date
     );
     const cs = await ClientService.create({ ...req.body, total_days: totalDays, total_charge: totalCharge });
-    res.status(201).json({ message: 'Đăng ký dịch vụ thành công', cs, totalCharge });
+
+    // Tự động tạo hóa đơn thanh toán
+    const invoiceNo = `INV-AUTO-${Date.now().toString().slice(-6)}-${Math.floor(1000 + Math.random() * 9000)}`;
+    const dueDate = moment(req.body.start_date).isValid()
+      ? moment(req.body.start_date).format('YYYY-MM-DD')
+      : moment().add(14, 'days').format('YYYY-MM-DD');
+
+    await Payment.create({
+      client_id: cs.client_id,
+      client_service_id: cs.id,
+      invoice_no: invoiceNo,
+      amount: totalCharge,
+      due_date: dueDate,
+      status: 'pending',
+      notes: `Hóa đơn tự động cho đăng ký dịch vụ ID: ${cs.id}`
+    });
+
+    res.status(201).json({ message: 'Đăng ký dịch vụ thành công và đã tự động phát sinh hóa đơn!', cs, totalCharge });
   } catch (err) {
     res.status(500).json({ message: 'Lỗi server', error: err.message });
   }

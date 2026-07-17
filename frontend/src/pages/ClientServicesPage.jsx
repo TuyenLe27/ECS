@@ -16,6 +16,8 @@ export default function ClientServicesPage() {
   const [clients, setClients] = useState([]);
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [statusFilter, setStatusFilter] = useState('');
+  const [serviceTypeFilter, setServiceTypeFilter] = useState('');
   const [modal, setModal] = useState({ open: false, mode: '', data: null });
   const [confirmId, setConfirmId] = useState(null);
   const [form, setForm] = useState(EMPTY);
@@ -25,13 +27,15 @@ export default function ClientServicesPage() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [lRes, cRes, sRes] = await Promise.all([clientServicesApi.getAll(), clientsApi.getAll(), servicesApi.getAll()]);
+      const params = {};
+      if (statusFilter) params.status = statusFilter;
+      const [lRes, cRes, sRes] = await Promise.all([clientServicesApi.getAll(params), clientsApi.getAll(), servicesApi.getAll()]);
       setList(lRes.data); setClients(cRes.data); setServices(sRes.data);
     } catch { toast.error('Lỗi tải dữ liệu'); }
     finally { setLoading(false); }
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => { fetchData(); }, [statusFilter]);
 
   // Tính phí preview
   useEffect(() => {
@@ -66,6 +70,12 @@ export default function ClientServicesPage() {
     catch { toast.error('Không thể xóa'); }
   };
 
+  // Client-side filter by service type
+  const filtered = list.filter(cs => {
+    if (!serviceTypeFilter) return true;
+    return cs.service?.type === serviceTypeFilter;
+  });
+
   return (
     <div>
       <div className="page-header">
@@ -74,15 +84,30 @@ export default function ClientServicesPage() {
           <button id="add-cs-btn" className="btn btn-primary" onClick={openAdd}><Plus size={16} />Đăng Ký Mới</button>
         )}
       </div>
+      <div className="filters-bar" style={{ flexWrap: 'wrap', gap: '8px' }}>
+        <select id="cs-type-filter" className="filter-select" value={serviceTypeFilter} onChange={e => setServiceTypeFilter(e.target.value)}>
+          <option value="">Tất cả loại dịch vụ</option>
+          <option value="inbound">In-bound</option>
+          <option value="outbound">Out-bound</option>
+          <option value="telemarketing">Tele Marketing</option>
+        </select>
+        <select id="cs-status-filter" className="filter-select" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
+          <option value="">Tất cả trạng thái</option>
+          <option value="active">Active</option>
+          <option value="completed">Completed</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+      </div>
       <div className="table-container">
-        <div className="table-header"><h3>Danh Sách Đăng Ký ({list.length})</h3></div>
+        <div className="table-header"><h3>Danh Sách Đăng Ký ({filtered.length}{filtered.length !== list.length ? ` / ${list.length}` : ''})</h3></div>
+
         {loading ? <Loading /> : (
           <table>
             <thead><tr><th>Khách Hàng</th><th>Dịch Vụ</th><th>Số NV</th><th>Ngày Bắt Đầu</th><th>Ngày Kết Thúc</th><th>Tổng Phí</th><th>Trạng Thái</th>{!isStaff && <th>Hành Động</th>}</tr></thead>
             <tbody>
-              {list.length === 0 ? (
+              {filtered.length === 0 ? (
                 <tr><td colSpan={isStaff ? 7 : 8} style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>Không có dữ liệu</td></tr>
-              ) : list.map(cs => (
+              ) : filtered.map(cs => (
                 <tr key={cs.id}>
                   <td><strong>{cs.client?.company_name}</strong></td>
                   <td><Badge type={cs.service?.type} /> <span style={{ fontSize: '12px', marginLeft: '4px' }}>{cs.service?.name}</span></td>

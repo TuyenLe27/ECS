@@ -8,6 +8,7 @@ const ClientProduct = require('./ClientProduct');
 const Payment = require('./Payment');
 const CallLog = require('./CallLog');
 const User = require('./User');
+const ClientProcedure = require('./ClientProcedure');
 
 // ── Employee relationships ──────────────────────────
 Employee.belongsTo(Department, { foreignKey: 'dept_id', as: 'department' });
@@ -26,6 +27,10 @@ Service.hasMany(ClientService, { foreignKey: 'service_id', as: 'clientServices' 
 // ── ClientProduct relationships ──────────────────────
 ClientProduct.belongsTo(Client, { foreignKey: 'client_id', as: 'client' });
 Client.hasMany(ClientProduct, { foreignKey: 'client_id', as: 'products' });
+
+// ── ClientProcedure relationships ─────────────────────
+ClientProcedure.belongsTo(Client, { foreignKey: 'client_id', as: 'client' });
+Client.hasMany(ClientProcedure, { foreignKey: 'client_id', as: 'procedures' });
 
 // ── Payment relationships ──────────────────────────
 Payment.belongsTo(Client, { foreignKey: 'client_id', as: 'client' });
@@ -46,5 +51,6 @@ User.belongsTo(Employee, { foreignKey: 'employee_id', as: 'employee' });
 
 module.exports = {
   Service, Department, Employee, Client,
-  ClientService, ClientProduct, Payment, CallLog, User
+  ClientService, ClientProduct, ClientProcedure, Payment, CallLog, User
 };
+

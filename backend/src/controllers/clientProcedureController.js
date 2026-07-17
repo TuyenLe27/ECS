@@ -1,22 +1,17 @@
-const { ClientProduct, Client, User, Employee, ClientService } = require('../models');
+const { ClientProcedure, Client, User, Employee, ClientService } = require('../models');
 const { Op } = require('sequelize');
 
-
-// GET /api/client-products?client_id=&search=
+// GET /api/client-procedures?client_id=&search=
 const getAll = async (req, res) => {
   try {
     const { client_id, search } = req.query;
     const where = {};
     if (client_id) where.client_id = client_id;
     if (search) {
-      where[Op.or] = [
-        { product_name: { [Op.like]: `%${search}%` } },
-        { category: { [Op.like]: `%${search}%` } }
-      ];
+      where.title = { [Op.like]: `%${search}%` };
     }
 
     let includeClause = [{ model: Client, as: 'client', attributes: ['id', 'company_name'] }];
-
 
     if (req.user.role === 'staff') {
       const userRecord = await User.findByPk(req.user.id);
@@ -34,46 +29,45 @@ const getAll = async (req, res) => {
       }
     }
 
-
-    const products = await ClientProduct.findAll({
+    const procedures = await ClientProcedure.findAll({
       where,
       include: includeClause,
-      order: [['product_name', 'ASC']]
+      order: [['title', 'ASC']]
     });
-    res.json(products);
+    res.json(procedures);
   } catch (err) {
     res.status(500).json({ message: 'Lỗi server', error: err.message });
   }
 };
 
-// POST /api/client-products
+// POST /api/client-procedures
 const create = async (req, res) => {
   try {
-    const product = await ClientProduct.create(req.body);
-    res.status(201).json({ message: 'Thêm sản phẩm thành công', product });
+    const proc = await ClientProcedure.create(req.body);
+    res.status(201).json({ message: 'Thêm quy trình thành công', proc });
   } catch (err) {
     res.status(500).json({ message: 'Lỗi server', error: err.message });
   }
 };
 
-// PUT /api/client-products/:id
+// PUT /api/client-procedures/:id
 const update = async (req, res) => {
   try {
-    const product = await ClientProduct.findByPk(req.params.id);
-    if (!product) return res.status(404).json({ message: 'Không tìm thấy sản phẩm' });
-    await product.update(req.body);
-    res.json({ message: 'Cập nhật thành công', product });
+    const proc = await ClientProcedure.findByPk(req.params.id);
+    if (!proc) return res.status(404).json({ message: 'Không tìm thấy quy trình' });
+    await proc.update(req.body);
+    res.json({ message: 'Cập nhật thành công', proc });
   } catch (err) {
     res.status(500).json({ message: 'Lỗi server', error: err.message });
   }
 };
 
-// DELETE /api/client-products/:id
+// DELETE /api/client-procedures/:id
 const remove = async (req, res) => {
   try {
-    const product = await ClientProduct.findByPk(req.params.id);
-    if (!product) return res.status(404).json({ message: 'Không tìm thấy sản phẩm' });
-    await product.destroy();
+    const proc = await ClientProcedure.findByPk(req.params.id);
+    if (!proc) return res.status(404).json({ message: 'Không tìm thấy quy trình' });
+    await proc.destroy();
     res.json({ message: 'Xóa thành công' });
   } catch (err) {
     res.status(500).json({ message: 'Lỗi server', error: err.message });

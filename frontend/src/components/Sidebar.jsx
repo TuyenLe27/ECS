@@ -3,7 +3,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
   LayoutDashboard, Settings, Users, Briefcase, Building2,
-  CreditCard, PhoneCall, BarChart3, Package, LogOut, Activity
+  CreditCard, PhoneCall, BarChart3, Package, LogOut, Activity, FileText
 } from 'lucide-react';
 
 const navItems = [
@@ -19,7 +19,9 @@ const navItems = [
     { to: '/clients', label: 'Khách Hàng', icon: Briefcase, allowedRoles: ['admin', 'manager', 'staff'] },
     { to: '/client-services', label: 'Đăng Ký Dịch Vụ', icon: Activity, allowedRoles: ['admin', 'manager', 'staff'] },
     { to: '/client-products', label: 'Sản Phẩm Client', icon: Package, allowedRoles: ['admin', 'manager', 'staff'] },
+    { to: '/client-procedures', label: 'Quy Trình Hỗ Trợ', icon: FileText, allowedRoles: ['admin', 'manager', 'staff'] },
   ]},
+
   { section: 'Tài Chính', items: [
     { to: '/payments', label: 'Thanh Toán', icon: CreditCard, allowedRoles: ['admin', 'manager'] },
     { to: '/call-logs', label: 'Call Logs', icon: PhoneCall, allowedRoles: ['admin', 'manager', 'staff'] },

@@ -30,11 +30,7 @@ const getAll = async (req, res) => {
         if (emp && emp.service_id) {
           includeClause[0].where = { service_id: emp.service_id };
           includeClause[0].required = true;
-        } else {
-          return res.json([]);
         }
-      } else {
-        return res.json([]);
       }
     }
 
@@ -63,11 +59,7 @@ const getById = async (req, res) => {
           if (!hasService) {
             return res.status(403).json({ message: 'Bạn không được phân công quản lý khách hàng này' });
           }
-        } else {
-          return res.status(403).json({ message: 'Bạn không được phân công quản lý khách hàng này' });
         }
-      } else {
-        return res.status(403).json({ message: 'Bạn không được phân công quản lý khách hàng này' });
       }
     }
 

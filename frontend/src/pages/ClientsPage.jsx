@@ -5,6 +5,7 @@ import { Badge, Loading, ConfirmModal } from '../components/UI';
 import { Search, Plus, Edit2, Trash2, Eye } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const EMPTY_FORM = {
   client_code: '', company_name: '', contact_person: '', email: '',
@@ -13,6 +14,7 @@ const EMPTY_FORM = {
 
 export default function ClientsPage() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const isStaff = user?.role === 'staff';
 
   const [clients, setClients] = useState([]);
@@ -132,6 +134,9 @@ export default function ClientsPage() {
                   {!isStaff && (
                     <td>
                       <div className="action-btns">
+                        <button id={`view-client-${c.id}`} className="btn btn-sm btn-secondary" onClick={() => navigate(`/clients/${c.id}`)} title="Xem Chi Tiết">
+                          <Eye size={13} />
+                        </button>
                         <button id={`edit-client-${c.id}`} className="btn btn-sm btn-secondary" onClick={() => openEdit(c)} title="Sửa">
                           <Edit2 size={13} />
                         </button>
