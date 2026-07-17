@@ -66,7 +66,7 @@ Sau khi Docker khởi chạy xong:
 ```bash
 # Chạy lệnh này từ thư mục gốc của dự án
 docker run -d --name ecs_mysql_local ^
-  -e MYSQL_ROOT_PASSWORD=12345678 ^
+  -e MYSQL_ROOT_PASSWORD=YOUR_MYSQL_PASSWORD ^
   -e MYSQL_DATABASE=ecs_db ^
   -p 3306:3306 ^
   -v "%cd%/database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql" ^
@@ -77,11 +77,11 @@ docker run -d --name ecs_mysql_local ^
 
 **Option B – Dùng MySQL đã cài sẵn trên máy:**
 ```bash
-mysql -u root -p12345678 -e "CREATE DATABASE IF NOT EXISTS ecs_db;"
-mysql -u root -p12345678 ecs_db < database/schema.sql
-mysql -u root -p12345678 ecs_db < database/seed.sql
+mysql -u YOUR_USER -pYOUR_PASSWORD -e "CREATE DATABASE IF NOT EXISTS ecs_db;"
+mysql -u YOUR_USER -pYOUR_PASSWORD ecs_db < database/schema.sql
+mysql -u YOUR_USER -pYOUR_PASSWORD ecs_db < database/seed.sql
 ```
-*(Thay `root` và `12345678` bằng thông tin MySQL thực tế của bạn)*
+*(Thay `YOUR_USER` và `YOUR_PASSWORD` bằng thông tin MySQL thực tế của bạn)*
 
 #### Bước 2: Cấu hình Backend
 ```bash
@@ -99,9 +99,9 @@ NODE_ENV=development
 DB_HOST=localhost
 DB_PORT=3306
 DB_NAME=ecs_db
-DB_USER=root
-DB_PASSWORD=12345678
-JWT_SECRET=ecs_super_secret_jwt_key_2024_excell_on_services
+DB_USER=YOUR_MYSQL_USER
+DB_PASSWORD=YOUR_MYSQL_PASSWORD
+JWT_SECRET=YOUR_JWT_SECRET_KEY
 JWT_EXPIRES_IN=24h
 FRONTEND_URL=http://localhost:5173
 ```
