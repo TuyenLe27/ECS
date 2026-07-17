@@ -50,13 +50,13 @@ INSERT INTO clients (client_code, company_name, contact_person, email, phone, ad
 -- 5. CLIENT_SERVICES
 -- ============================================================
 INSERT INTO client_services (client_id, service_id, num_employees, start_date, end_date, total_days, total_charge, status) VALUES
-(1, 1, 5, '2024-01-01', '2024-12-31', 365, 8212500.00, 'completed'),  -- Samsung: Inbound Tech (5emp × 4500 × 365)
-(1, 2, 3, '2024-01-01', '2024-12-31', 365, 4927500.00, 'completed'),  -- Samsung: Inbound CS
-(2, 3, 8, '2024-03-01', '2025-02-28', 365, 17520000.00, 'active'),    -- Viettel: Outbound
-(2, 4, 4, '2024-03-01', '2025-02-28', 365, 8030000.00, 'active'),     -- Viettel: TeleMarketing
-(3, 2, 6, '2024-06-01', NULL, NULL, NULL, 'active'),                   -- Vinamilk: Inbound CS (đang chạy)
-(4, 4, 10, '2024-07-01', NULL, NULL, NULL, 'active'),                  -- FPT: TeleMarketing
-(5, 1, 4, '2024-09-01', '2025-08-31', 365, 6570000.00, 'active');     -- Panasonic: Inbound Tech
+(1, 1, 5, '2024-01-01', '2024-12-31', 365, 8212500.00, 'completed'),   -- Samsung: Inbound Tech (5emp × 4500 × 365)
+(1, 2, 3, '2024-01-01', '2024-12-31', 365, 4927500.00, 'completed'),   -- Samsung: Inbound CS
+(2, 3, 8, '2024-03-01', '2025-02-28', 365, 17520000.00, 'active'),     -- Viettel: Outbound
+(2, 4, 4, '2024-03-01', '2025-02-28', 365, 8030000.00, 'active'),      -- Viettel: TeleMarketing
+(3, 2, 6, '2024-06-01', NULL, NULL, NULL, 'active'),                    -- Vinamilk: Inbound CS (đang chạy)
+(4, 4, 10, '2024-07-01', NULL, NULL, NULL, 'active'),                   -- FPT: TeleMarketing
+(5, 1, 4, '2024-09-01', '2025-08-31', 365, 6570000.00, 'active');      -- Panasonic: Inbound Tech
 
 -- ============================================================
 -- 6. CLIENT_PRODUCTS
@@ -86,11 +86,11 @@ INSERT INTO client_products (client_id, product_name, category, description, pri
 INSERT INTO payments (client_id, client_service_id, invoice_no, amount, due_date, paid_date, payment_method, status) VALUES
 (1, 1, 'INV-2024-001', 8212500.00, '2024-12-31', '2024-12-28', 'bank_transfer', 'paid'),
 (1, 2, 'INV-2024-002', 4927500.00, '2024-12-31', '2024-12-30', 'bank_transfer', 'paid'),
-(2, 3, 'INV-2024-003', 17520000.00, '2025-02-28', NULL, 'bank_transfer', 'pending'),
-(2, 4, 'INV-2024-004', 8030000.00, '2025-02-28', NULL, 'bank_transfer', 'pending'),
-(3, 5, 'INV-2024-005', 3240000.00, '2024-11-30', NULL, 'online', 'overdue'),  -- Trễ hạn!
-(4, 6, 'INV-2024-006', 5500000.00, '2024-12-15', NULL, 'bank_transfer', 'overdue'), -- Trễ hạn!
-(5, 7, 'INV-2024-007', 6570000.00, '2025-08-31', NULL, 'cheque', 'pending');
+(2, 3, 'INV-2024-003', 17520000.00, '2025-02-28', NULL, 'bank_transfer', 'overdue'),
+(2, 4, 'INV-2024-004', 8030000.00, '2025-02-28', NULL, 'bank_transfer', 'overdue'),
+(3, 5, 'INV-2024-005', 3240000.00, '2024-11-30', NULL, 'online', 'overdue'),
+(4, 6, 'INV-2024-006', 5500000.00, '2024-12-15', NULL, 'bank_transfer', 'overdue'),
+(5, 7, 'INV-2024-007', 6570000.00, '2025-08-31', NULL, 'cheque', 'overdue');
 
 -- ============================================================
 -- 8. CALL_LOGS
@@ -111,7 +111,6 @@ INSERT INTO call_logs (client_id, employee_id, call_type, call_datetime, duratio
 -- 9. USERS (password là "Admin@123" đã hash bằng bcrypt)
 -- ============================================================
 INSERT INTO users (username, password_hash, email, full_name, role, employee_id) VALUES
-('admin', '$2a$12$TyOiioV.m72moJ.LjTnHE.eSjGJ6/jt.6PTWZqndE71n8N5u7IPtS', 'admin@ecs.com', 'System Administrator', 'admin', NULL),
-('manager', '$2a$10$aStf/XETVzhukAQiTrVbcetHV1TRTFOJXn3PPynA9tD2U57S5PhIK', 'manager@ecs.com', 'Service Manager', 'manager', NULL),
-('staff1', '$2a$10$aStf/XETVzhukAQiTrVbcetHV1TRTFOJXn3PPynA9tD2U57S5PhIK', 'staff@ecs.com', 'Staff Member', 'staff', 1);
-
+('admin', '$2a$12$iVqh1cdc411By41qWhj5SeIv9kavowtQPAJdwvSbSukmKpoMO38zO', 'admin@ecs.com', 'System Administrator', 'admin', NULL),
+('manager', '$2a$12$iVqh1cdc411By41qWhj5SeIv9kavowtQPAJdwvSbSukmKpoMO38zO', 'manager@ecs.com', 'Service Manager', 'manager', NULL),
+('staff1', '$2a$12$iVqh1cdc411By41qWhj5SeIv9kavowtQPAJdwvSbSukmKpoMO38zO', 'staff@ecs.com', 'Staff Member', 'staff', 1);
