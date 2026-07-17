@@ -127,7 +127,9 @@ export default function ClientsPage() {
                   <td>{c.industry || '-'}</td>
                   <td>
                     {c.clientServices?.length > 0
-                      ? c.clientServices.map(s => <span key={s.id} style={{ marginRight: 4 }}><Badge type={s.service?.type} /></span>)
+                      ? Array.from(new Set(c.clientServices.filter(s => s.service?.type).map(s => s.service.type))).map(type => (
+                          <span key={type} style={{ marginRight: 4 }}><Badge type={type} /></span>
+                        ))
                       : <span className="text-muted">-</span>}
                   </td>
                   <td><Badge status={c.status} /></td>

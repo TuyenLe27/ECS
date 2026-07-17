@@ -103,7 +103,7 @@ export default function EmployeesPage() {
               ) : employees.map(e => (
                 <tr key={e.id}>
                   <td><strong>{e.emp_code}</strong></td>
-                  <td><strong>{e.last_name} {e.first_name}</strong></td>
+                  <td style={{ whiteSpace: 'nowrap' }}><strong>{e.last_name} {e.first_name}</strong></td>
                   <td style={{ fontSize: '12px' }}>{e.email}</td>
                   <td>{e.designation}</td>
                   <td>{e.department?.name || '-'}</td>

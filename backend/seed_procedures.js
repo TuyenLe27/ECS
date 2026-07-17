@@ -32,6 +32,8 @@ const procedures = [
 
 const seed = async () => {
   try {
+    console.log('🌱 Syncing ClientProcedure table...');
+    await ClientProcedure.sync({ alter: true });
     console.log('🌱 Seeding procedures...');
     for (const proc of procedures) {
       await ClientProcedure.create({
