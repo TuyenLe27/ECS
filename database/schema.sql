@@ -119,6 +119,21 @@ CREATE TABLE IF NOT EXISTS client_products (
 );
 
 -- ============================================================
+-- 6b. CLIENT_PROCEDURES TABLE
+-- Quy trình hỗ trợ cho client
+-- ============================================================
+CREATE TABLE IF NOT EXISTS client_procedures (
+    id              INT AUTO_INCREMENT PRIMARY KEY,
+    client_id       INT NOT NULL,
+    title           VARCHAR(255) NOT NULL,
+    steps           TEXT NOT NULL,
+    is_active       TINYINT(1) DEFAULT 1,
+    created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE
+);
+
+-- ============================================================
 -- 7. PAYMENTS TABLE
 -- Thanh toán của client cho ECS
 -- ============================================================
