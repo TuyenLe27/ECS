@@ -292,31 +292,35 @@ docker push YOUR_DOCKERHUB_USERNAME/ecs-backend:latest
 docker push YOUR_DOCKERHUB_USERNAME/ecs-frontend:latest
 ```
 
-#### d. Khởi động lại hệ thống với code mới
+#### d. Khởi động lại hệ thống với code mới (Bảo toàn dữ liệu Database)
 ```bash
-docker compose down
-docker compose up -d --build
+docker compose down          # Dừng container (KHÔNG dùng -v)
+docker compose up -d --build # Rebuild code mới và khởi chạy
 ```
+
+> ⚠️ **LƯU Ý QUAN TRỌNG VỀ DATABASE:**
+> - **KHÔNG dùng `docker compose down -v`**: Thêm tham số `-v` sẽ xóa sạch toàn bộ ổ đĩa lưu trữ (volume) của MySQL và **làm mất tất cả dữ liệu thực tế** bạn đã thêm/sửa qua giao diện web!
+> - Cả môi trường **Local Dev (`npm run dev`)** và **Docker** đều dùng chung Database MySQL (port `3307`), dữ liệu tạo ra ở đâu cũng sẽ tự động lưu vĩnh viễn và đồng bộ 100%.
 
 ---
 
-### ✅ Tóm Tắt Quy Trình Hoàn Chỉnh Sau Mỗi Lần Code Xong
+### ✅ Tóm Tắt Quy Trình Cập Nhật Code Hoàn Chỉnh
 
 ```bash
-# 1. Commit và push code lên GitHub
+# 1. Commit và push code mới lên GitHub
 git add .
 git commit -m "feat: mô tả thay đổi"
 git push origin main
 
-# 2. Build và push Docker images lên Docker Hub
+# 2. Build lại và khởi chạy Docker với code mới (Giữ nguyên dữ liệu DB)
+docker compose down
+docker compose up -d --build
+
+# 3. (Tùy chọn) Push images lên Docker Hub nếu muốn share cho người khác
 docker build -t YOUR_DOCKERHUB_USERNAME/ecs-backend:latest ./backend
 docker build -t YOUR_DOCKERHUB_USERNAME/ecs-frontend:latest ./frontend
 docker push YOUR_DOCKERHUB_USERNAME/ecs-backend:latest
 docker push YOUR_DOCKERHUB_USERNAME/ecs-frontend:latest
-
-# 3. Restart lại hệ thống (nếu đang dùng Docker)
-docker compose down
-docker compose up -d --build
 ```
 
 ---
