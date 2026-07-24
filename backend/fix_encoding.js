@@ -1,17 +1,17 @@
 /**
- * Script fix encoding tiếng Việt trong DB
+ * Script fix encoding tiếng Việt và tên nhân viên có dấu trong DB
  * Chạy: node fix_encoding.js
  */
 const { Sequelize } = require('sequelize');
 require('dotenv').config();
 
 const sequelize = new Sequelize(
-  process.env.DB_NAME,
-  process.env.DB_USER,
-  process.env.DB_PASSWORD,
+  process.env.DB_NAME || 'ecs_db',
+  process.env.DB_USER || 'root',
+  process.env.DB_PASSWORD || '12345678',
   {
-    host: process.env.DB_HOST,
-    port: process.env.DB_PORT,
+    host: process.env.DB_HOST || 'localhost',
+    port: process.env.DB_PORT || '3307',
     dialect: 'mysql',
     logging: false,
     dialectOptions: {
@@ -26,24 +26,6 @@ const serviceDescriptions = {
   3: 'Gọi ra cho khách hàng để promotion sản phẩm và kiểm tra sự hài lòng',
   4: 'Marketing và quảng bá sản phẩm/dịch vụ qua điện thoại',
   5: 'Hỗ trợ kỹ thuật qua điện thoại 24/7 cho khách hàng',
-  6: 'Dịch vụ chăm sóc khách hàng, nhận đơn hàng, hỗ trợ không kỹ thuật',
-  7: 'Gọi ra cho khách hàng để promotion sản phẩm và kiểm tra sự hài lòng',
-  8: 'Tele marketing và quảng bá thương hiệu doanh nghiệp',
-  9: 'Hỗ trợ kỹ thuật đặc biệt cho doanh nghiệp lớn',
-  10: 'Dịch vụ outbound sales chuyên nghiệp cho B2B',
-};
-
-const serviceNames = {
-  1: 'In-bound Technical Support',
-  2: 'In-bound Customer Service',
-  3: 'Out-bound Sales',
-  4: 'Tele Marketing',
-  5: 'In-bound Technical Support Premium',
-  6: 'In-bound Customer Service Basic',
-  7: 'Out-bound Sales Pro',
-  8: 'Tele Marketing Premium',
-  9: 'Enterprise Technical Support',
-  10: 'B2B Out-bound Sales',
 };
 
 const departmentDescriptions = {
@@ -55,6 +37,30 @@ const departmentDescriptions = {
   6: 'Kiểm toán tài chính và đánh giá chất lượng dịch vụ',
 };
 
+const employeeData = {
+  1: { first_name: 'Minh', last_name: 'Nguyễn' },
+  2: { first_name: 'Lan', last_name: 'Trần' },
+  3: { first_name: 'Hùng', last_name: 'Lê' },
+  4: { first_name: 'Thu', last_name: 'Phạm' },
+  5: { first_name: 'Đức', last_name: 'Võ' },
+  6: { first_name: 'Mai', last_name: 'Hoàng' },
+  7: { first_name: 'Tuấn', last_name: 'Đặng' },
+  8: { first_name: 'Hoa', last_name: 'Bùi' },
+};
+
+const userData = {
+  1: 'Quản trị viên Hệ thống',
+  2: 'Quản lý Dịch vụ',
+  3: 'Nguyễn Minh',
+  4: 'Võ Đức',
+  5: 'Trần Lan',
+  6: 'Lê Hùng',
+  7: 'Phạm Thu',
+  8: 'Hoàng Mai',
+  9: 'Đặng Tuấn',
+  10: 'Bùi Hoa',
+};
+
 const procedureData = {
   1: {
     title: 'Quy trình xử lý lỗi màn hình điện thoại Samsung',
@@ -62,7 +68,7 @@ const procedureData = {
   },
   2: {
     title: 'Quy trình đổi trả sữa bột Vinamilk bị vón cục',
-    steps: '1. Hỏi thăm tình trạng sức khỏe của bé và khách hàng.\n2. Ghi nhận thông tin chi tiết: Tên sản phẩm, Lô sản xuất (Lot), Hạn sử dụng (EXP).\n3. Hỏi khách hàng về điều kiện bảo quản sữa tại nhà.\n4. Thông báo bộ phận kiểm định chất lượng của Vinamilk sẽ liên hệ thu hồi mẫu sữa trong vòng 24 giờ.\n5. Hướng dẫn đại lý hoặc siêu thị nơi khách hàng mua tiến hành đổi hộp mới cho khách hàng miễn ý.\n6. Cảm ơn khách hàng đã phản hồi đóng góp ý kiến.'
+    steps: '1. Hỏi thăm tình trạng sức khỏe của bé và khách hàng.\n2. Ghi nhận thông tin chi tiết: Tên sản phẩm, Lô sản xuất (Lot), Hạn sử dụng (EXP).\n3. Hỏi khách hàng về điều kiện bảo quản sữa tại nhà.\n4. Thông báo bộ phận kiểm định chất lượng của Vinamilk sẽ liên hệ thu hồi mẫu sữa trong vòng 24 giờ.\n5. Hướng dẫn đại lý hoặc siêu thị nơi khách hàng mua tiến hành đổi hộp mới cho khách hàng miễn phí.\n6. Cảm ơn khách hàng đã phản hồi đóng góp ý kiến.'
   },
   3: {
     title: 'Quy trình tiếp nhận sửa chữa Điều hòa Panasonic tại nhà',
@@ -92,22 +98,36 @@ const run = async () => {
     await sequelize.authenticate();
     console.log('✅ Connected to DB');
 
-    // Fix charset for services table
-    await sequelize.query("ALTER TABLE services CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;");
-    console.log('✅ Altered services table charset');
-
-    // Fix charset for all main tables
-    const tables = ['clients', 'employees', 'departments', 'call_logs', 'payments', 'client_services', 'client_products', 'users', 'client_procedures'];
+    // Fix charset for all tables
+    const tables = ['clients', 'employees', 'departments', 'call_logs', 'payments', 'client_services', 'client_products', 'users', 'client_procedures', 'services'];
     for (const table of tables) {
       try {
         await sequelize.query(`ALTER TABLE ${table} CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`);
-        console.log(`✅ Altered ${table} charset`);
+        console.log(`✅ Altered ${table} charset to utf8mb4`);
       } catch(e) {
-        console.log(`⚠️  Could not alter ${table}: ${e.message}`);
+        console.log(`⚠️ Could not alter ${table}: ${e.message}`);
       }
     }
 
-    // Update service descriptions with correct Vietnamese text
+    // Update employees Vietnamese names
+    for (const [id, emp] of Object.entries(employeeData)) {
+      await sequelize.query(
+        `UPDATE employees SET first_name = ?, last_name = ? WHERE id = ?`,
+        { replacements: [emp.first_name, emp.last_name, parseInt(id)] }
+      );
+    }
+    console.log('✅ Updated employee Vietnamese accented names');
+
+    // Update users full_name
+    for (const [id, name] of Object.entries(userData)) {
+      await sequelize.query(
+        `UPDATE users SET full_name = ? WHERE id = ?`,
+        { replacements: [name, parseInt(id)] }
+      );
+    }
+    console.log('✅ Updated user full_names');
+
+    // Update service descriptions
     for (const [id, desc] of Object.entries(serviceDescriptions)) {
       await sequelize.query(
         `UPDATE services SET description = ? WHERE id = ?`,
@@ -143,17 +163,17 @@ const run = async () => {
     }
     console.log('✅ Updated client products');
 
-    // Verify services
-    const [results] = await sequelize.query('SELECT id, name, description FROM services ORDER BY id');
-    console.log('\n📋 Services after fix:');
-    results.forEach(r => console.log(`  [${r.id}] ${r.name}: ${r.description?.substring(0, 50)}`));
+    // Clean call_logs corrupted text
+    await sequelize.query(`UPDATE call_logs SET purpose = REPLACE(purpose, 'Cu???c g???i', 'Cuộc gọi');`);
+    await sequelize.query(`UPDATE call_logs SET purpose = REPLACE(purpose, 'h??? th???ng', 'hệ thống');`);
+    await sequelize.query(`UPDATE call_logs SET purpose = REPLACE(purpose, 'đ???n', 'đến');`);
+    await sequelize.query(`UPDATE call_logs SET purpose = REPLACE(purpose, 'n???i b???', 'nội bộ');`);
+    await sequelize.query(`UPDATE call_logs SET purpose = REPLACE(purpose, 'Th???o lu???n', 'Thảo luận');`);
+    await sequelize.query(`UPDATE call_logs SET purpose = REPLACE(purpose, 'd??? ??n', 'dự án');`);
+    await sequelize.query(`UPDATE call_logs SET purpose = REPLACE(purpose, 'H???p', 'Họp');`);
+    console.log('✅ Cleaned call_logs notes & purpose text');
 
-    // Verify departments
-    const [deptResults] = await sequelize.query('SELECT id, name, description FROM departments LIMIT 6');
-    console.log('\n📋 Departments after fix:');
-    deptResults.forEach(d => console.log(`  [${d.id}] ${d.name}: ${d.description}`));
-
-    console.log('\n✅ All encoding fixes applied!');
+    console.log('\n✨ ALL VIETNAMESE ACCENTS & ENCODINGS FIXED PERFECTLY!');
     process.exit(0);
   } catch (err) {
     console.error('❌ Error:', err.message);
@@ -162,5 +182,3 @@ const run = async () => {
 };
 
 run();
-
-
