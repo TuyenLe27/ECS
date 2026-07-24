@@ -11,15 +11,20 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Xử lý lỗi 401 (token hết hạn)
+// Xử lý lỗi 401 (token hết hạn) — chỉ redirect khi server thực sự trả 401
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    // Chỉ xử lý 401 khi có response thật từ server (không phải network error)
     if (error.response?.status === 401) {
-      localStorage.removeItem('ecs_token');
-      localStorage.removeItem('ecs_user');
-      window.location.href = '/login';
+      // Không redirect nếu đang ở trang login rồi
+      if (window.location.pathname !== '/login') {
+        localStorage.removeItem('ecs_token');
+        localStorage.removeItem('ecs_user');
+        window.location.href = '/login';
+      }
     }
+    // Network error (ECONNREFUSED, timeout, etc.) — KHÔNG redirect, chỉ reject
     return Promise.reject(error);
   }
 );

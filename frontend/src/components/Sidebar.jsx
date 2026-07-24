@@ -68,14 +68,23 @@ export default function Sidebar() {
 
       <div className="sidebar-footer">
         <div className="user-info">
-          <div className="user-avatar">
-            {user?.full_name?.charAt(0) || 'U'}
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div className="user-name" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {user?.full_name}
+          <div
+            onClick={() => navigate('/profile')}
+            style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, cursor: 'pointer', minWidth: 0 }}
+            title="Xem hồ sơ cá nhân"
+          >
+            <div className="user-avatar" style={{ transition: 'transform 0.15s' }}>
+              {user?.full_name?.charAt(0) || 'U'}
             </div>
-            <div className="user-role">{user?.role}</div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div className="user-name" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {user?.full_name}
+              </div>
+              <div className="user-role" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <span>{user?.role}</span>
+                <span style={{ fontSize: 10, opacity: 0.7 }}>• Profile ⚙️</span>
+              </div>
+            </div>
           </div>
           <button onClick={handleLogout} className="btn btn-icon btn-secondary" title="Đăng xuất">
             <LogOut size={15} />

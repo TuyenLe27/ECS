@@ -10,19 +10,23 @@
     "db:seed": "node src/config/seeder.js"
   },
   "dependencies": {
-    "express": "^4.18.2",
-    "sequelize": "^6.35.2",
-    "mysql2": "^3.7.0",
     "bcryptjs": "^2.4.3",
-    "jsonwebtoken": "^9.0.2",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
-    "express-validator": "^7.0.1",
     "exceljs": "^4.4.0",
-    "puppeteer-core": "^21.11.0",
-    "moment": "^2.29.4",
+    "express": "^4.18.2",
+    "express-rate-limit": "^7.1.5",
+    "express-validator": "^7.0.1",
     "helmet": "^7.1.0",
-    "express-rate-limit": "^7.1.5"
+    "jsonwebtoken": "^9.0.2",
+    "localtunnel": "^2.0.2",
+    "moment": "^2.29.4",
+    "mysql2": "^3.7.0",
+    "ngrok": "^5.0.0-beta.2",
+    "puppeteer-core": "^21.11.0",
+    "sequelize": "^6.35.2",
+    "tunnelmole": "^2.4.0",
+    "twilio": "^6.0.2"
   },
   "devDependencies": {
     "nodemon": "^3.0.2"

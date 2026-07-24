@@ -113,4 +113,12 @@ INSERT INTO call_logs (client_id, employee_id, call_type, call_datetime, duratio
 INSERT INTO users (username, password_hash, email, full_name, role, employee_id) VALUES
 ('admin', '$2a$12$iVqh1cdc411By41qWhj5SeIv9kavowtQPAJdwvSbSukmKpoMO38zO', 'admin@ecs.com', 'System Administrator', 'admin', NULL),
 ('manager', '$2a$12$iVqh1cdc411By41qWhj5SeIv9kavowtQPAJdwvSbSukmKpoMO38zO', 'manager@ecs.com', 'Service Manager', 'manager', NULL),
-('staff1', '$2a$12$iVqh1cdc411By41qWhj5SeIv9kavowtQPAJdwvSbSukmKpoMO38zO', 'staff@ecs.com', 'Staff Member', 'staff', 1);
+('staff1', '$2a$12$iVqh1cdc411By41qWhj5SeIv9kavowtQPAJdwvSbSukmKpoMO38zO', 'minh.nguyen@ecs.com', 'Nguyen Minh', 'staff', 1),
+('staff2', '$2a$12$iVqh1cdc411By41qWhj5SeIv9kavowtQPAJdwvSbSukmKpoMO38zO', 'lan.tran@ecs.com', 'Tran Lan', 'staff', 2),
+('staff3', '$2a$12$iVqh1cdc411By41qWhj5SeIv9kavowtQPAJdwvSbSukmKpoMO38zO', 'hung.le@ecs.com', 'Le Hung', 'staff', 3),
+('staff4', '$2a$12$iVqh1cdc411By41qWhj5SeIv9kavowtQPAJdwvSbSukmKpoMO38zO', 'thu.pham@ecs.com', 'Pham Thu', 'staff', 4),
+('staff5', '$2a$12$iVqh1cdc411By41qWhj5SeIv9kavowtQPAJdwvSbSukmKpoMO38zO', 'duc.vo@ecs.com', 'Vo Duc', 'staff', 5),
+('staff6', '$2a$12$iVqh1cdc411By41qWhj5SeIv9kavowtQPAJdwvSbSukmKpoMO38zO', 'mai.hoang@ecs.com', 'Hoang Mai', 'staff', 6),
+('staff7', '$2a$12$iVqh1cdc411By41qWhj5SeIv9kavowtQPAJdwvSbSukmKpoMO38zO', 'tuan.dang@ecs.com', 'Dang Tuan', 'staff', 7),
+('staff8', '$2a$12$iVqh1cdc411By41qWhj5SeIv9kavowtQPAJdwvSbSukmKpoMO38zO', 'hoa.bui@ecs.com', 'Bui Hoa', 'staff', 8);
+

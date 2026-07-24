@@ -145,7 +145,7 @@ CREATE TABLE IF NOT EXISTS payments (
 -- ============================================================
 CREATE TABLE IF NOT EXISTS call_logs (
     id              INT AUTO_INCREMENT PRIMARY KEY,
-    client_id       INT NOT NULL,
+    client_id       INT,
     employee_id     INT NOT NULL,
     call_type       ENUM('inbound','outbound','telemarketing') NOT NULL,
     call_datetime   DATETIME NOT NULL,
@@ -153,8 +153,10 @@ CREATE TABLE IF NOT EXISTS call_logs (
     purpose         VARCHAR(200),                    -- Mục đích cuộc gọi
     outcome         ENUM('resolved','callback','no_answer','escalated','completed') DEFAULT 'resolved',
     notes           TEXT,
+    recording_url   VARCHAR(500),                    -- Đường dẫn/URL file ghi âm MP3
+    recording_sid   VARCHAR(100),                    -- Twilio Recording SID
     created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE,
+    FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE SET NULL,
     FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE RESTRICT
 );
 

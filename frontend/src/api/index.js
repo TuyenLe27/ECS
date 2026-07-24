@@ -4,6 +4,7 @@ export const authApi = {
   login: (data) => api.post('/auth/login', data),
   getMe: () => api.get('/auth/me'),
   changePassword: (data) => api.put('/auth/change-password', data),
+  updateProfile: (data) => api.put('/auth/profile', data),
 };
 
 export const servicesApi = {
@@ -73,6 +74,11 @@ export const callLogsApi = {
   create: (data) => api.post('/call-logs', data),
   update: (id, data) => api.put(`/call-logs/${id}`, data),
   delete: (id) => api.delete(`/call-logs/${id}`),
+};
+
+export const twilioApi = {
+  getToken: () => api.get('/twilio/token'),
+  createLog: (data) => api.post('/twilio/log', data),
 };
 
 export const reportsApi = {

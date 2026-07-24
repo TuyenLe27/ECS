@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { CallProvider, useCall } from './context/CallContext';
 import Sidebar from './components/Sidebar';
+import CallWidget from './components/CallWidget';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import ServicesPage from './pages/ServicesPage';
@@ -16,10 +18,17 @@ import ClientProceduresPage from './pages/ClientProceduresPage';
 import PaymentsPage from './pages/PaymentsPage';
 import CallLogsPage from './pages/CallLogsPage';
 import ReportsPage from './pages/ReportsPage';
+import ProfilePage from './pages/ProfilePage';
 
 
 function ProtectedLayout({ children }) {
   const { user, loading } = useAuth();
+  const { initDevice } = useCall();
+
+  useEffect(() => {
+    if (user) initDevice();
+  }, [user]);
+
   if (loading) return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', fontSize: '18px' }}>Đang tải...</div>;
   if (!user) return <Navigate to="/login" replace />;
   return (
@@ -28,6 +37,7 @@ function ProtectedLayout({ children }) {
       <div className="main-content" style={{ marginLeft: '260px' }}>
         <div className="page-body">{children}</div>
       </div>
+      <CallWidget />
     </div>
   );
 }
@@ -63,6 +73,7 @@ function AppRoutes() {
       <Route path="/payments" element={<ProtectedLayout><RoleProtectedRoute allowedRoles={['admin', 'manager']}><PaymentsPage /></RoleProtectedRoute></ProtectedLayout>} />
       <Route path="/call-logs" element={<ProtectedLayout><RoleProtectedRoute allowedRoles={['admin', 'manager', 'staff']}><CallLogsPage /></RoleProtectedRoute></ProtectedLayout>} />
       <Route path="/reports" element={<ProtectedLayout><RoleProtectedRoute allowedRoles={['admin', 'manager']}><ReportsPage /></RoleProtectedRoute></ProtectedLayout>} />
+      <Route path="/profile" element={<ProtectedLayout><ProfilePage /></ProtectedLayout>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
@@ -72,12 +83,14 @@ export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <AppRoutes />
-        <Toaster position="top-right" toastOptions={{
-          style: { background: '#1e293b', color: '#f1f5f9', border: '1px solid rgba(255,255,255,0.1)' },
-          success: { iconTheme: { primary: '#10b981', secondary: '#fff' } },
-          error: { iconTheme: { primary: '#ef4444', secondary: '#fff' } }
-        }} />
+        <CallProvider>
+          <AppRoutes />
+          <Toaster position="top-right" toastOptions={{
+            style: { background: '#1e293b', color: '#f1f5f9', border: '1px solid rgba(255,255,255,0.1)' },
+            success: { iconTheme: { primary: '#10b981', secondary: '#fff' } },
+            error: { iconTheme: { primary: '#ef4444', secondary: '#fff' } }
+          }} />
+        </CallProvider>
       </BrowserRouter>
     </AuthProvider>
   );

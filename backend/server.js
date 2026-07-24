@@ -10,10 +10,15 @@ const app = express();
 
 // ── Security Middleware ────────────────────────────
 app.use(helmet());
-const allowedOrigins = [process.env.FRONTEND_URL, 'http://localhost:5173', 'http://localhost:3000'].filter(Boolean);
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
+    // Cho phép: Twilio webhooks (không có origin), localhost variants, ngrok
+    if (!origin
+      || origin.includes('localhost')
+      || origin.includes('127.0.0.1')
+      || origin.includes('[::1]')
+      || origin.includes('.ngrok')
+    ) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
@@ -36,8 +41,8 @@ app.use((req, res, next) => {
   next();
 });
 
-// Rate limiting
-const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 500 });
+// Rate limiting (Tăng giới hạn max để tránh lỗi 429 khi tự động sync Call Logs hoặc gọi WebRTC nhiều tab)
+const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 3000 });
 app.use('/api/', limiter);
 
 // ── Routes ─────────────────────────────────────────
@@ -52,6 +57,7 @@ app.use('/api/client-procedures', require('./src/routes/clientProcedures'));
 app.use('/api/payments', require('./src/routes/payments'));
 app.use('/api/call-logs', require('./src/routes/callLogs'));
 app.use('/api/reports', require('./src/routes/reports'));
+app.use('/api/twilio', require('./src/routes/twilio'));
 
 // ── Health check ───────────────────────────────────
 app.get('/health', (req, res) => res.json({ status: 'OK', timestamp: new Date() }));
@@ -76,3 +82,4 @@ const startServer = async () => {
 };
 
 startServer();
+

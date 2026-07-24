@@ -2,11 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { callLogsApi, clientsApi, employeesApi } from '../api';
 import Modal from '../components/Modal';
 import { Badge, Loading, ConfirmModal } from '../components/UI';
-import { Plus, Edit2, Trash2, Phone } from 'lucide-react';
+import { Plus, Edit2, Trash2, Phone, Volume2, Download, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 
-const EMPTY = { client_id: '', employee_id: '', call_type: 'inbound', call_datetime: '', duration_minutes: 0, purpose: '', outcome: 'resolved', notes: '' };
+const API_BASE_URL = 'http://localhost:5000/api';
+
+const EMPTY = { client_id: '', employee_id: '', call_type: 'inbound', call_datetime: '', duration_minutes: 0, purpose: '', outcome: 'resolved', notes: '', recording_url: '' };
 
 export default function CallLogsPage() {
   const { user } = useAuth();
@@ -20,12 +22,13 @@ export default function CallLogsPage() {
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [modal, setModal] = useState({ open: false, mode: '', data: null });
+  const [audioModal, setAudioModal] = useState({ open: false, url: '', title: '' });
   const [confirmId, setConfirmId] = useState(null);
   const [form, setForm] = useState(EMPTY);
   const [saving, setSaving] = useState(false);
 
-  const fetchData = async () => {
-    setLoading(true);
+  const fetchData = async (isSilent = false) => {
+    if (!isSilent) setLoading(true);
     try {
       const params = {};
       if (typeFilter) params.call_type = typeFilter;
@@ -36,11 +39,21 @@ export default function CallLogsPage() {
         callLogsApi.getAll(params), clientsApi.getAll(), employeesApi.getAll()
       ]);
       setLogs(lRes.data); setClients(cRes.data); setEmployees(eRes.data);
-    } catch { toast.error('Lỗi tải dữ liệu'); }
-    finally { setLoading(false); }
+    } catch {
+      if (!isSilent) toast.error('Lỗi tải dữ liệu');
+    } finally {
+      if (!isSilent) setLoading(false);
+    }
   };
 
-  useEffect(() => { fetchData(); }, [typeFilter, employeeFilter, dateFrom, dateTo]);
+  useEffect(() => {
+    fetchData(false);
+    // Tự động làm mới 10s/lần ở chế độ im lặng để cập nhật file ghi âm sau khi Twilio hoàn tất mã hóa MP3
+    const timer = setInterval(() => {
+      fetchData(true);
+    }, 10000);
+    return () => clearInterval(timer);
+  }, [typeFilter, employeeFilter, dateFrom, dateTo]);
 
   const openAdd = () => {
     const base = { ...EMPTY, call_datetime: new Date().toISOString().slice(0, 16) };
@@ -65,12 +78,35 @@ export default function CallLogsPage() {
     catch { toast.error('Không thể xóa'); }
   };
 
+  const playRecording = (l) => {
+    if (!l.recording_url) return toast.error('Cuộc gọi này không có file ghi âm');
+    const proxyUrl = `${API_BASE_URL}/twilio/recording-proxy?url=${encodeURIComponent(l.recording_url)}`;
+    const empName = l.employee ? `${l.employee.last_name} ${l.employee.first_name}` : '';
+    setAudioModal({
+      open: true,
+      url: proxyUrl,
+      title: `🎧 Ghi âm: ${l.client?.company_name || 'Khách hàng'} — ${empName} (${new Date(l.call_datetime).toLocaleDateString('vi-VN')})`,
+    });
+  };
+
+  const downloadRecording = (l) => {
+    if (!l.recording_url) return toast.error('Cuộc gọi này không có file ghi âm');
+    const downloadUrl = `${API_BASE_URL}/twilio/recording-proxy?url=${encodeURIComponent(l.recording_url)}&download=1`;
+    const a = document.createElement('a');
+    a.href = downloadUrl;
+    a.download = `recording-${l.id}.mp3`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    toast.success('Đang tải file ghi âm...');
+  };
+
   const outcomeColor = { resolved: 'success', callback: 'warning', no_answer: 'danger', escalated: 'danger', completed: 'active' };
 
   return (
     <div>
       <div className="page-header">
-        <div><h2>📞 Call Logs</h2><p>Lịch sử các cuộc gọi in-bound, out-bound và tele marketing</p></div>
+        <div><h2>📞 Call Logs</h2><p>Lịch sử cuộc gọi & file ghi âm trò chuyện</p></div>
         <button id="add-calllog-btn" className="btn btn-primary" onClick={openAdd}><Plus size={16} />Thêm Call Log</button>
       </div>
       <div className="filters-bar" style={{ flexWrap: 'wrap', gap: '8px' }}>
@@ -102,10 +138,10 @@ export default function CallLogsPage() {
         <div className="table-header"><h3>Lịch Sử Cuộc Gọi ({logs.length})</h3></div>
         {loading ? <Loading /> : (
           <table>
-            <thead><tr><th>Thời Gian</th><th>Khách Hàng</th><th>Nhân Viên</th><th>Loại</th><th>Thời Lượng</th><th>Mục Đích</th><th>Kết Quả</th><th>Hành Động</th></tr></thead>
+            <thead><tr><th>Thời Gian</th><th>Khách Hàng</th><th>Nhân Viên</th><th>Loại</th><th>Thời Lượng</th><th>Mục Đích</th><th>Kết Quả</th><th>File Ghi Âm</th><th>Hành Động</th></tr></thead>
             <tbody>
               {logs.length === 0 ? (
-                <tr><td colSpan="8" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>Không có dữ liệu</td></tr>
+                <tr><td colSpan="9" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>Không có dữ liệu</td></tr>
               ) : logs.map(l => (
                 <tr key={l.id}>
                   <td style={{ fontSize: '12px' }}>{new Date(l.call_datetime).toLocaleString('vi-VN')}</td>
@@ -113,9 +149,33 @@ export default function CallLogsPage() {
                   <td>{l.employee ? `${l.employee.last_name} ${l.employee.first_name}` : '-'}</td>
                   <td><Badge type={l.call_type} /></td>
                   <td>{l.duration_minutes} phút</td>
-                  <td style={{ maxWidth: '200px', fontSize: '12px' }}>{l.purpose || '-'}</td>
+                  <td style={{ maxWidth: '180px', fontSize: '12px' }}>{l.purpose || '-'}</td>
                   <td>
                     <span className={`text-${outcomeColor[l.outcome] || 'muted'}`} style={{ fontSize: '12px', fontWeight: 600 }}>{l.outcome}</span>
+                  </td>
+                  <td>
+                    {l.recording_url ? (
+                      <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                        <button
+                          className="btn btn-sm btn-primary"
+                          style={{ padding: '4px 8px', fontSize: 11, display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                          onClick={() => playRecording(l)}
+                          title="Nghe file ghi âm"
+                        >
+                          <Volume2 size={13} /> Nghe
+                        </button>
+                        <button
+                          className="btn btn-sm btn-secondary"
+                          style={{ padding: '4px 8px', fontSize: 11, display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                          onClick={() => downloadRecording(l)}
+                          title="Tải file ghi âm MP3 về máy"
+                        >
+                          <Download size={13} /> Tải MP3
+                        </button>
+                      </div>
+                    ) : (
+                      <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontStyle: 'italic' }}>Không có</span>
+                    )}
                   </td>
                   <td>
                     <div className="action-btns">
@@ -172,10 +232,38 @@ export default function CallLogsPage() {
         </div>
         <div className="form-group"><label className="form-label">Mục Đích Cuộc Gọi</label>
           <input className="form-control" value={form.purpose} onChange={e => setForm({ ...form, purpose: e.target.value })} /></div>
+        <div className="form-group"><label className="form-label">URL File Ghi Âm (Tùy chọn)</label>
+          <input className="form-control" value={form.recording_url || ''} onChange={e => setForm({ ...form, recording_url: e.target.value })} placeholder="https://api.twilio.com/..." /></div>
         <div className="form-group"><label className="form-label">Ghi Chú</label>
           <textarea className="form-control" rows={2} value={form.notes || ''} onChange={e => setForm({ ...form, notes: e.target.value })} /></div>
       </Modal>
       <ConfirmModal isOpen={!!confirmId} onClose={() => setConfirmId(null)} onConfirm={handleDelete} message="Xóa call log này?" />
+
+      {/* Audio Player Modal */}
+      <Modal
+        isOpen={audioModal.open}
+        onClose={() => setAudioModal({ open: false, url: '', title: '' })}
+        size="modal-md"
+        title={audioModal.title || '🎧 Trình Phát File Ghi Âm'}
+      >
+        <div style={{ textAlign: 'center', padding: '16px 0' }}>
+          <div style={{ background: 'var(--bg-secondary)', padding: '20px', borderRadius: 12, marginBottom: 16 }}>
+            <audio controls autoPlay src={audioModal.url} style={{ width: '100%', outline: 'none' }}>
+              Trình duyệt của bạn không hỗ trợ thẻ audio.
+            </audio>
+          </div>
+          <div>
+            <a
+              href={`${audioModal.url}&download=1`}
+              className="btn btn-primary"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, textDecoration: 'none' }}
+              download
+            >
+              <Download size={15} /> Tải File Ghi Âm MP3
+            </a>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

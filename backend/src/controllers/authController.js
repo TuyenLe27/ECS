@@ -72,4 +72,37 @@ const changePassword = async (req, res) => {
   }
 };
 
-module.exports = { login, getMe, changePassword };
+// PUT /api/auth/profile
+const updateProfile = async (req, res) => {
+  try {
+    const { full_name, email } = req.body;
+    const user = await User.findByPk(req.user.id);
+    if (!user) return res.status(404).json({ message: 'Không tìm thấy người dùng' });
+
+    // Kiểm tra trùng email nếu email thay đổi
+    if (email && email !== user.email) {
+      const existing = await User.findOne({ where: { email } });
+      if (existing) return res.status(400).json({ message: 'Email đã được sử dụng' });
+    }
+
+    await user.update({
+      full_name: full_name || user.full_name,
+      email: email || user.email,
+    });
+
+    res.json({
+      message: 'Cập nhật thông tin thành công',
+      user: {
+        id: user.id,
+        username: user.username,
+        full_name: user.full_name,
+        email: user.email,
+        role: user.role,
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ message: 'Lỗi server', error: err.message });
+  }
+};
+
+module.exports = { login, getMe, changePassword, updateProfile };

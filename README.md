@@ -5,19 +5,95 @@ Dự án Hệ thống Quản lý Dịch vụ Khách hàng (ECS Consulting Manage
 ---
 
 ## 🛠️ Công Nghệ Sử Dụng (Tech Stack)
-- **Frontend**: React (Vite), TailwindCSS/Vanilla CSS, Lucide Icons, Recharts (Biểu đồ), Axios.
-- **Backend**: Node.js, Express.js, JWT (Xác thực bảo mật), ExcelJS (Xuất báo cáo Excel), Puppeteer-core (Xuất báo cáo PDF chất lượng cao).
+- **Frontend**: React (Vite), TailwindCSS/Vanilla CSS, Lucide Icons, Recharts (Biểu đồ), Axios, @twilio/voice-sdk.
+- **Backend**: Node.js, Express.js, JWT (Xác thực bảo mật), ExcelJS (Xuất báo cáo Excel), Puppeteer-core (Xuất báo cáo PDF), Twilio (Gọi điện thoại thật).
 - **Database**: MySQL 8.0 với Sequelize ORM.
 - **Containerization**: Docker & Docker Compose.
+- **Telephony**: Twilio Voice SDK — gọi đi/nhận cuộc gọi đến trực tiếp trên trình duyệt, tự động tạo CallLog.
 
 ---
 
-## 🔐 Tài Khoản Đăng Nhập Mẫu
-| Tài Khoản | Mật Khẩu | Vai Trò (Role) | Quyền Hạn |
+## 📞 Tính Năng Gọi Điện (Twilio Voice)
+
+### Tổng Quan
+Nhân viên có thể **gọi ra số điện thoại thật** và **nhận cuộc gọi đến** ngay trên trình duyệt — không cần phần mềm điện thoại riêng. Mỗi cuộc gọi kết thúc sẽ **tự động tạo CallLog** với thời lượng thực tế.
+
+### Thông Tin Twilio (đã cấu hình)
+| Tham số | Giá trị |
+|---|---|
+| Account SID | `YOUR_TWILIO_ACCOUNT_SID` |
+| Phone Number | `+18573926288` |
+| TwiML App SID | `YOUR_TWILIO_TWIML_APP_SID` |
+| API Key | `YOUR_TWILIO_API_KEY` |
+
+> ⚠️ **Bảo mật:** Auth Token và API Secret lưu trong `backend/.env`, **không commit lên GitHub**.
+
+### Biến Môi Trường Twilio (trong `backend/.env`)
+```env
+TWILIO_ACCOUNT_SID=YOUR_TWILIO_ACCOUNT_SID
+TWILIO_AUTH_TOKEN=YOUR_TWILIO_AUTH_TOKEN
+TWILIO_PHONE_NUMBER=+18573926288
+TWILIO_TWIML_APP_SID=YOUR_TWILIO_TWIML_APP_SID
+TWILIO_API_KEY=YOUR_TWILIO_API_KEY
+TWILIO_API_SECRET=YOUR_TWILIO_API_SECRET
+```
+
+### Cài Đặt Để Chạy Twilio (Development)
+
+Twilio cần URL công khai để gửi webhook về backend. Dùng **localtunnel** (đã cài sẵn):
+
+**Terminal riêng — chạy trước khi khởi động backend:**
+```bash
+lt --port 5000 --subdomain ecs-backend-twilio
+# → URL: https://ecs-backend-twilio.loca.lt
+```
+
+> 💡 Giữ terminal này chạy suốt phiên làm việc. Mỗi lần mở lại máy phải chạy lại lệnh này.
+
+### Cấu Hình Twilio Console (đã thiết lập — chỉ cần cập nhật nếu đổi URL)
+
+**TwiML App** → [console.twilio.com > Voice > TwiML Apps](https://console.twilio.com/us1/develop/voice/twiml/apps) > `ECS Voice App`:
+- Voice Request URL: `https://ecs-backend-twilio.loca.lt/api/twilio/voice`
+
+**Phone Number** → [console.twilio.com > Phone Numbers](https://console.twilio.com/us1/develop/phone-numbers/manage/incoming) > `+18573926288` > Configure:
+- A Call Comes In: `https://ecs-backend-twilio.loca.lt/api/twilio/incoming`
+- Call Status Changes: `https://ecs-backend-twilio.loca.lt/api/twilio/status`
+
+### Các Webhook Endpoint Backend
+| Endpoint | Method | Mô tả |
+|---|---|---|
+| `/api/twilio/token` | GET | Tạo Access Token cho browser SDK (cần JWT) |
+| `/api/twilio/voice` | POST | TwiML cho cuộc gọi ra (Twilio gọi vào) |
+| `/api/twilio/incoming` | POST | TwiML cho cuộc gọi đến từ ngoài |
+| `/api/twilio/status` | POST | StatusCallback — tự tạo CallLog khi call kết thúc |
+| `/api/twilio/log` | POST | Fallback tạo CallLog từ frontend (cần JWT) |
+
+### Cách Test Tính Năng
+1. Chạy `lt --port 5000 --subdomain ecs-backend-twilio` (terminal riêng)
+2. Chạy backend: `cd backend && npm run dev`
+3. Chạy frontend: `cd frontend && npm run dev`
+4. Đăng nhập → thấy widget **"Sẵn sàng nhận cuộc gọi"** góc phải màn hình (chấm xanh)
+5. **Test gọi ra:** Bấm "Gọi Ra" → nhập số → gọi → số điện thoại đích sẽ reo
+6. **Test nhận cuộc gọi:** Gọi từ điện thoại vào số `+18573926288` → widget reo → bấm Nghe
+7. Sau cuộc gọi → popup điền kết quả → CallLog tự động xuất hiện trong danh sách
+
+
+
+---
+
+## 🔐 Tài Khoản Đăng Nhập Mẫu (Mật khẩu mặc định: `Admin@123`)
+| Tài Khoản | Mật Khẩu | Vai Trò (Role) | Nhân Viên Liên Kết |
 |---|---|---|---|
-| `admin` | `Admin@123` | **Admin** | Toàn quyền cấu hình, CRUD, Xem doanh thu |
-| `manager` | `Admin@123` | **Manager** | Quản lý khách hàng, duyệt báo cáo |
-| `staff1` | `Admin@123` | **Staff** | Nhập liệu cuộc gọi, xem thông tin được phân công |
+| `admin` | `Admin@123` | **Admin** | Quản trị viên hệ thống |
+| `manager` | `Admin@123` | **Manager** | Quản lý dịch vụ |
+| `staff1` | `Admin@123` | **Staff** | Nguyễn Minh (`EMP001` - Call Center Agent) |
+| `staff2` | `Admin@123` | **Staff** | Trần Lần (`EMP002` - Senior Agent) |
+| `staff3` | `Admin@123` | **Staff** | Lê Hùng (`EMP003` - Outbound Specialist) |
+| `staff4` | `Admin@123` | **Staff** | Phạm Thu (`EMP004` - Tele Marketer) |
+| `staff5` | `Admin@123` | **Staff** | Võ Đức (`EMP005` - HR Officer) |
+| `staff6` | `Admin@123` | **Staff** | Hoàng Mai (`EMP006` - IT Technician) |
+| `staff7` | `Admin@123` | **Staff** | Đặng Tuấn (`EMP007` - Team Leader) |
+| `staff8` | `Admin@123` | **Staff** | Bùi Hoa (`EMP008` - Training Coordinator) |
 
 ---
 
